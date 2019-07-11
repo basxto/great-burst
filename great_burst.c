@@ -16,6 +16,37 @@
 
 UINT8 current_level[45];
 const UINT8 map_block[] = {0x05, 0x11, 0x1D, 0x27, 0x06, 0x13, 0x1F, 0x29};
+const UINT8 map_shadow[] = {0x31, 0x32, 0x34, 0x15, 0x08, 0x33};
+
+
+void draw_block(UINT8 position, UINT8 block){
+    const UINT8 pos0 = 20 * ((0 + position) / 18) + (0 + position) % 18;
+    const UINT8 pos1 = 20 * ((1 + position) / 18) + (1 + position) % 18;
+    const UINT8 pos2 = 20 * ((2 + position) / 18) + (2 + position) % 18;
+    //row + offset (1 row + 1 column=21) + column
+    background[ pos0 + 21 ] = map_block[block];
+    background[ pos1 + 21 ] = map_block[block]+1;
+    //draw shadow
+    if(background[ pos0 + 41 ] == map_shadow[2]){
+        //if there is a shadow edge, use full shadow
+        background[ pos0 + 41 ] = map_shadow[1];
+    }else{
+        background[ pos0 + 41 ] = map_shadow[0];
+    }
+    background[ pos1 + 41 ] = map_shadow[1];
+    if((2 + position) % 18 != 0){//last block in row does not have this shadow
+        if(background[ pos2 + 21 ] == map_shadow[2]){
+            //if there is a shadow edge, use full shadow
+            background[ pos2 + 21 ] = map_shadow[3];
+        }else if(background[ pos2 + 21 ] == map_block[0]){
+            //if there is shadow above use double shadow
+            background[ pos2 + 21 ] = map_shadow[4];
+        }else{
+            background[ pos2 + 21 ] = map_shadow[5];
+        }
+        background[ pos2 + 41 ] = map_shadow[2];
+    }
+}
 
 //directly modifies background variable
 //always draws current_level
@@ -28,13 +59,10 @@ void draw_blocks(){
         //20 per line 1 offset
         //first block is border
         if(((current_level[i]>>4)&0x07) != 0){
-            //row + offset (1 row + 1 column=21) + column
-            background[20 * ((0 + (i<<2)) / 18) + 21 + (0 + (i<<2)) % 18] = map_block[(current_level[i]>>4)&0x07];
-            background[20 * ((1 + (i<<2)) / 18) + 21 + (1 + (i<<2)) % 18] = map_block[(current_level[i]>>4)&0x07]+1;
+            draw_block((i<<2), (current_level[i]>>4)&0x07);
         }
         if((current_level[i]&0x07)  != 0){
-            background[20 * ((2 + (i<<2)) / 18) + 21 + (2 + (i<<2)) % 18] = map_block[current_level[i]&0x07];
-            background[20 * ((3 + (i<<2)) / 18) + 21 + (3 + (i<<2)) % 18] = map_block[current_level[i]&0x07]+1;
+            draw_block((i<<2)+2, current_level[i]&0x07);
         }
     }
     //update
@@ -87,13 +115,12 @@ void great_burst(){
     }
 
     //load background tileset
-    set_bkg_data(0,58, great_burst_bg_data);
+    set_bkg_data(0,59, great_burst_bg_data);
     //set level
-    memcpy(current_level, great_burst_level[1], 45);
+    memcpy(current_level, great_burst_level[0], 45);
     //fill level background
     draw_blocks();
     SHOW_BKG;
     SHOW_SPRITES;
     BGP_REG = 0xE4;
-
 }
