@@ -2,10 +2,11 @@
 #include <stdio.h>
 
 #include "splashscreen.c"
+#include "great_burst.c"
 
 void main(){
-    splash();
-
+    //splash();
+    great_burst();
     while(1){
     }
 }
