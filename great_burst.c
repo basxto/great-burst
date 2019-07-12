@@ -72,6 +72,12 @@ void draw_blocks(){
 void great_burst(){
     UINT8 changed = 0;
     UINT8 i;
+    UINT8 ball_x = 0;
+    UINT8 ball_y = 0;
+    UINT8 ball_speed = 1;
+    UINT8 ball_direction = 1;//0 is up; 1 is 45 degree to the right
+    UINT8 paddle = 0;
+    UINT8 speed = 1;
     //set second color palette
     //dark grey and white get switched
     OBP1_REG = 0x26;//11000110
@@ -123,4 +129,54 @@ void great_burst(){
     SHOW_BKG;
     SHOW_SPRITES;
     BGP_REG = 0xE4;
+    while(1){
+        speed = 2;
+        if(joypad() & J_B){
+            speed = 4;
+        }
+        //only check directions
+        switch(joypad() & 0x0F){
+            case J_RIGHT:
+                if(paddle + speed > ((9-3)<<4)){//*8*2
+                    speed = ((9-3)<<4) - paddle;
+                }
+                paddle+=speed;
+                for(i = 4; i < 16; ++i){
+                    scroll_sprite(i, speed, 0);
+                }
+                break;
+            case J_LEFT:
+                if(paddle < speed){
+                    speed = paddle;
+                }
+                paddle-=speed;
+                for(i = 4; i < 16; ++i){
+                    scroll_sprite(i, 0-speed, 0);
+                }
+                break;
+            case J_UP:
+                //jump to the left
+                for(i = 4; i < 16; ++i){
+                    scroll_sprite(i, 0-paddle, 0);
+                }
+                paddle = 0;
+                break;
+            case J_DOWN:
+                //jump to the right
+                
+                if(!(joypad() & J_B)){//jump to half paddle
+                    for(i = 4; i < 16; ++i){
+                        scroll_sprite(i, ((9-3)<<4) - paddle, 0);
+                    }
+                    paddle = ((9-3)<<4);
+                }else{//jump to half paddle (additional /2)
+                    for(i = 4; i < 16; ++i){
+                        scroll_sprite(i, ((9-3)<<3) - paddle, 0);
+                    }
+                    paddle = ((9-3)<<3);
+                }
+                break;
+        }
+        delay(100);
+    }
 }
