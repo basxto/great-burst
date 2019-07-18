@@ -74,8 +74,10 @@ void great_burst(){
     UINT8 i;
     UINT8 ball_x = 0;
     UINT8 ball_y = 0;
-    UINT8 ball_speed = 1;
-    UINT8 ball_direction = 1;//0 is up; 1 is 45 degree to the right
+    UINT8 ball_speed = 1;//1-3
+    //0-23
+    //0 is up; 3 is 45 degree to the right; 6 is right; 12 is down...
+    UINT8 ball_direction = 19;
     UINT8 paddle = 0;
     UINT8 speed = 1;
     //set second color palette
@@ -130,6 +132,21 @@ void great_burst(){
     SHOW_SPRITES;
     BGP_REG = 0xE4;
     while(1){
+        //move ball
+        for(i = 0; i < 4; ++i){
+            if( 0 <= ball_direction && ball_direction < 6){
+                scroll_sprite(i, ball_direction * ball_speed, (ball_direction-6) * ball_speed);
+            }else if( 6 <= ball_direction && ball_direction < 12){
+                scroll_sprite(i, (12-ball_direction) * ball_speed, (ball_direction-6) * ball_speed);
+            }else if( 12 <= ball_direction && ball_direction < 18){
+                scroll_sprite(i, (ball_direction-12) * -ball_speed, (18-ball_direction) * ball_speed);
+            }else if( 18 <= ball_direction && ball_direction < 24){
+                scroll_sprite(i, (24-ball_direction) * -ball_speed, (18-ball_direction) * ball_speed);
+            }
+
+        }
+
+        //control paddle
         speed = 2;
         if(joypad() & J_B){
             speed = 4;
@@ -177,6 +194,8 @@ void great_burst(){
                 }
                 break;
         }
-        delay(100);
+        for(i = 0; i < 3; ++i){
+            wait_vbl_done();
+        }
     }
 }
