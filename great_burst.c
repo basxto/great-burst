@@ -69,6 +69,15 @@ void draw_blocks(){
     set_bkg_tiles(0,0,20,18, background);
 }
 
+UINT8 mirrorDirection(UINT8 direction, UINT8 horizontal){
+    //UINT8 ret = 0;
+    if(horizontal){
+        return 24 - direction;
+    }else{
+        return 24 - ((direction + 12)%24);
+    }
+}
+
 void great_burst(){
     UINT8 changed = 0;
     UINT8 i;
@@ -77,7 +86,7 @@ void great_burst(){
     UINT8 ball_speed = 1;//1-3
     //0-23
     //0 is up; 3 is 45 degree to the right; 6 is right; 12 is down...
-    UINT8 ball_direction = 19;
+    UINT8 ball_direction = 1;
     UINT8 paddle = 0;
     UINT8 speed = 1;
     //set second color palette
@@ -134,21 +143,31 @@ void great_burst(){
     while(1){
         //move ball
         for(i = 0; i < 4; ++i){
-            if( 0 <= ball_direction && ball_direction < 6){
+            if( ball_direction < 6 ){
                 scroll_sprite(i, ball_direction * ball_speed, (ball_direction-6) * ball_speed);
-            }else if( 6 <= ball_direction && ball_direction < 12){
+            }else if( ball_direction < 12 ){
                 scroll_sprite(i, (12-ball_direction) * ball_speed, (ball_direction-6) * ball_speed);
-            }else if( 12 <= ball_direction && ball_direction < 18){
+            }else if( ball_direction < 18 ){
                 scroll_sprite(i, (ball_direction-12) * -ball_speed, (18-ball_direction) * ball_speed);
-            }else if( 18 <= ball_direction && ball_direction < 24){
+            }else if( ball_direction < 24 ){
                 scroll_sprite(i, (24-ball_direction) * -ball_speed, (18-ball_direction) * ball_speed);
             }
 
         }
+        //cheat & debug codes
+        if(joypad() == (J_A | J_DOWN)){
+            speed = (speed + 2)%8;
+        }
+        if(joypad() == (J_A | J_LEFT)){
+            ball_direction = mirrorDirection(ball_direction, 1);
+        }
+        if(joypad() == (J_A | J_UP)){
+            ball_direction = mirrorDirection(ball_direction, 0);
+        }
 
         //control paddle
         speed = 2;
-        if(joypad() & J_B){
+        if(joypad() == J_B){
             speed = 4;
         }
         //only check directions
