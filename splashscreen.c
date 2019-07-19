@@ -14,6 +14,27 @@
 #define splashscreen_a_xoffset 4
 #define splashscreen_line_width 10
 
+
+//make a bling sound wiith three notes
+void bling(){
+    NR10_REG = 0x00; // no sweep
+    NR11_REG = 0x50; // 50% duty
+
+    NR12_REG = 0xF0; // volume envelope
+    NR14_REG = 0xC7; // msb
+    NR13_REG = 0x70; // lsb
+    wait_vbl_done();
+    NR12_REG = 0xF0; // volume envelope
+    NR14_REG = 0xC7; // msb
+    NR13_REG = 0x80; // lsb
+    wait_vbl_done();
+    wait_vbl_done();
+    wait_vbl_done();
+    NR12_REG = 0xF2; // volume envelope
+    NR14_REG = 0xC7; // msb
+    NR13_REG = 0xB0; // lsb
+}
+
 // moves head in 'background' array
 // starts on 5th (of 18) row, 2nd (of 20) column
 // works from right to left and must operate this way
@@ -46,7 +67,6 @@ void splash(){
     //set second color palette
     //dark grey and white get switched
     OBP1_REG = 0xC6;//11000110
-
     set_bkg_data(0,150, oga_splash_data);
     memcpy(background, oga_splash_map_og, 360);
 
@@ -152,7 +172,8 @@ void splash(){
     set_bkg_tiles(0,0,20,18, background);
     delay(1000);
     set_bkg_tiles(0,0,20,18, oga_splash_map);
-    delay(5000);
+    bling();
+    delay(1000);
     //fadeout
     for(i = 0; i < 4; i++){
         switch(i){
