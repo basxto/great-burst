@@ -10,4 +10,5 @@ void main() {
     NR51_REG = 0x11; // only first channel
     // splash();
     great_burst();
+
 }
