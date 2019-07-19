@@ -45,7 +45,7 @@ typedef struct {
 } Paddle;
 
 Ball ball = {0, 0, 1, 1, 1};
-Paddle paddle = {0, 1, 0};
+Paddle paddle = {0, 1, 6};
 
 UINT8 current_level[45];
 const UINT8 map_block[] = {0x05, 0x11, 0x1D, 0x27, 0x06, 0x13, 0x1F, 0x29};
@@ -112,6 +112,62 @@ UINT8 mirrorDirection(UINT8 direction, UINT8 horizontal) {
     }
 }
 
+// use middleparts at 16-24
+void changePaddleSize(UINT8 size) {
+    UINT8 i;
+    // respect minimum size
+    if (size < 6) {
+        size = 6;
+    }
+    if (size > paddle.size) { // show more
+        for (i = paddle.size - 6; i < size - 6; ++i) {
+            scroll_sprite(paddle_middle_start + (i << 1), (3 + i) << 3,
+                          18 << 3);
+            scroll_sprite(paddle_middle_start + (i << 1) + 1, (3 + i) << 3,
+                          18 << 3);
+        }
+        // center ball
+        if (ball.locked) {
+            for (i = ball_start; i < ball_end; ++i) {
+                scroll_sprite(i, (size - paddle.size) << 2, 0);
+            }
+            ball.x += (size - paddle.size) << 2;
+        }
+    } else { // show less
+        for (i = size - 6; i < paddle.size - 6; ++i) {
+            move_sprite(paddle_middle_start + (i << 1), 16, 0);
+            move_sprite(paddle_middle_start + (i << 1) + 1, 16, 8);
+        }
+        // center ball
+        if (ball.locked) {
+            for (i = ball_start; i < ball_end; ++i) {
+                scroll_sprite(i, ((size - paddle.size) << 2), 0);
+            }
+            ball.x += (size - paddle.size) << 2;
+        }
+    }
+    // move right end;
+    for (i = paddle_right_start; i < paddle_right_end; ++i) {
+        scroll_sprite(i, (size - paddle.size) << 3, 0);
+    }
+    paddle.size = size;
+}
+
+void movePaddle(UINT8 by) {
+    UINT8 i;
+    paddle.position += by;
+    for (i = paddle_left_start; i < paddle_right_end + ((paddle.size - 6) << 1);
+         ++i) {
+        scroll_sprite(i, by, 0);
+    }
+    if (ball.locked) {
+        for (i = ball_start; i < ball_end; ++i) {
+            scroll_sprite(i, by, 0);
+        }
+        ball.x += by;
+    }
+}
+
 // sound effect generator
 void plonger(UINT8 note) {
     NR10_REG = 0x13; // arpeggio | 3
@@ -163,7 +219,7 @@ void great_burst() {
     move_sprite(ball_start + 3, 8, 8);
     // place on 0,0
     for (i = ball_start; i < ball_end; ++i) {
-        scroll_sprite(i, 2 << 3, 18 << 3);
+        scroll_sprite(i, 16, 18 << 3);
     }
     // place 16, 16
     for (i = ball_start; i < ball_end; ++i) {
@@ -172,24 +228,36 @@ void great_burst() {
     ball.x = ball.y = 16;
 
     // draw paddle
-    // left and right side
-    for (i = 0; i < paddle_right_end - paddle_left_start; ++i) {
-        set_sprite_tile(paddle_left_start + i, great_burst_fg_map[i]);
-        move_sprite(paddle_left_start + i, (i % 6) << 3, (i / 6) << 3);
+    // left side
+    for (i = 0; i < 6; ++i) {
+        set_sprite_tile(paddle_left_start + i,
+                        great_burst_fg_map[i + (i >= 3 ? 3 : 0)]);
+        move_sprite(paddle_left_start + i, (i % 3) << 3, (i >= 3) << 3);
     }
+    // right side
+    for (i = 0; i < 6; ++i) {
+        set_sprite_tile(paddle_right_start + i,
+                        great_burst_fg_map[i + (i >= 3 ? 6 : 3)]);
+        move_sprite(paddle_right_start + i, ((i % 3) + 3) << 3, (i >= 3) << 3);
+    }
+    // use different palette for shiny parts
     set_sprite_prop(paddle_left_start + 2, S_PALETTE);
-    set_sprite_prop(paddle_left_start + 3, S_PALETTE);
+    set_sprite_prop(paddle_right_start + 0, S_PALETTE);
 
     // move to left
     for (i = paddle_left_start; i < paddle_right_end; ++i) {
-        scroll_sprite(i, 2 << 3, 18 << 3);
+        scroll_sprite(i, 16, 18 << 3);
     }
     // middle parts, but this will stay hidden for now
     for (i = paddle_middle_start; i < paddle_middle_end; i += 2) {
         set_sprite_tile(i, great_burst_fg_map[6 * 2]);
         set_sprite_prop(i, S_PALETTE);
-        set_sprite_tile(i, great_burst_fg_map[6 * 3]);
-        move_sprite(i, 0, 8);
+        set_sprite_tile(i + 1, great_burst_fg_map[6 * 3]);
+        move_sprite(i + 1, 0, 8);
+    }
+    // move them to x start position
+    for (i = paddle_middle_start; i < paddle_middle_end; ++i) {
+        scroll_sprite(i, 16, 0);
     }
 
     // load background tileset
@@ -278,72 +346,27 @@ void great_burst() {
         // only check directions
         switch (joypad() & 0x0F) {
         case J_RIGHT:
-            if (paddle.position + paddle.speed > ((9 - 3) << 4)) { //*8*2
-                paddle.speed = ((9 - 3) << 4) - paddle.position;
+            if (paddle.position + paddle.speed >
+                ((18 - paddle.size) << 3)) { //*8*2
+                paddle.speed = ((18 - paddle.size) << 3) - paddle.position;
             }
-            paddle.position += paddle.speed;
-            for (i = paddle_left_start; i < paddle_right_end; ++i) {
-                scroll_sprite(i, paddle.speed, 0);
-            }
-            if (ball.locked) {
-                for (i = ball_start; i < ball_end; ++i) {
-                    scroll_sprite(i, paddle.speed, 0);
-                }
-                ball.x += paddle.speed;
-            }
+            movePaddle(paddle.speed);
             break;
         case J_LEFT:
             if (paddle.position < paddle.speed) {
                 paddle.speed = paddle.position;
             }
-            paddle.position -= paddle.speed;
-            for (i = paddle_left_start; i < paddle_right_end; ++i) {
-                scroll_sprite(i, -paddle.speed, 0);
-            }
-            if (ball.locked) {
-                for (i = ball_start; i < ball_end; ++i) {
-                    scroll_sprite(i, -paddle.speed, 0);
-                }
-                ball.x -= paddle.speed;
-            }
+            movePaddle(-paddle.speed);
             break;
         case J_UP:
-            // jump to the left
-            for (i = paddle_left_start; i < paddle_right_end; ++i) {
-                scroll_sprite(i, -paddle.position, 0);
-            }
-            if (ball.locked) {
-                for (i = ball_start; i < ball_end; ++i) {
-                    scroll_sprite(i, -paddle.position, 0);
-                }
-                ball.x -= paddle.position;
-            }
-            paddle.position = 0;
+            movePaddle(-paddle.position);
             break;
         case J_DOWN:
             // jump to the right
             if (!(joypad() & J_B)) { // jump to half paddle
-                for (i = paddle_left_start; i < paddle_right_end; ++i) {
-                    scroll_sprite(i, ((9 - 3) << 4) - paddle.position, 0);
-                }
-                if (ball.locked) {
-                    for (i = ball_start; i < ball_end; ++i) {
-                        scroll_sprite(i, ((9 - 3) << 4) - paddle.position, 0);
-                    }
-                    ball.x += ((9 - 3) << 4) - paddle.position;
-                }
-                paddle.position = ((9 - 3) << 4);
-            } else { // jump to half paddle (additional /2)
-                for (i = paddle_left_start; i < paddle_right_end; ++i) {
-                    scroll_sprite(i, ((9 - 3) << 3) - paddle.position, 0);
-                }
-                if (ball.locked) {
-                    for (i = ball_start; i < ball_end; ++i) {
-                        scroll_sprite(i, ((9 - 3) << 3) - paddle.position, 0);
-                    }
-                    ball.x += ((9 - 3) << 3) - paddle.position;
-                }
-                paddle.position = ((9 - 3) << 3);
+                movePaddle(((18 - paddle.size) << 3) - paddle.position);
+            } else { // jump full
+                movePaddle(((18 - paddle.size) << 2) - paddle.position);
             }
             break;
         }
