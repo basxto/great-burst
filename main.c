@@ -4,9 +4,9 @@
 #include "splashscreen.c"
 #include "great_burst.c"
 
-void main(){
-    //splash();
+void main() {
+    // splash();
     great_burst();
-    while(1){
+    while (1) {
     }
 }
