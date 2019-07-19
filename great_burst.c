@@ -1,4 +1,5 @@
 #include <gb/gb.h>
+#include <rand.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -51,6 +52,35 @@ UINT8 current_level[45];
 const UINT8 map_block[] = {0x05, 0x11, 0x1D, 0x27, 0x06, 0x13, 0x1F, 0x29};
 const UINT8 map_shadow[] = {0x31, 0x32, 0x34, 0x15, 0x08, 0x33};
 
+UINT8 random_block(UINT8 ran) {
+    if (ran < 20) {
+        return 0x01;
+    } else if (ran < 35) {
+        return 0x02;
+    } else if (ran < 45) {
+        return 0x03;
+    } else if (ran < 55) {
+        return 0x06;
+    } else if (ran < 60) {
+        return 0x05;
+    } else if (ran < 65) {
+        return 0x07;
+    } else if (ran < 70) {
+        return 0x04;
+    }
+    // this is way more than 30%
+    return 0x00;
+}
+
+void random_level(UINT16 seed) {
+    UINT8 i;
+    initrand(seed);
+    for (i = 0; i < 45; i++) {
+        current_level[i] = random_block(rand() % 100);
+        current_level[i] |= (random_block(rand() % 100)) << 4;
+    }
+}
+
 void draw_block(UINT8 position, UINT8 block) {
     const UINT8 pos0 = 20 * ((0 + position) / 18) + (0 + position) % 18;
     const UINT8 pos1 = 20 * ((1 + position) / 18) + (1 + position) % 18;
@@ -66,8 +96,8 @@ void draw_block(UINT8 position, UINT8 block) {
         background[pos0 + 41] = map_shadow[0];
     }
     background[pos1 + 41] = map_shadow[1];
-    if ((2 + position) % 18 !=
-        0) { // last block in row does not have this shadow
+    // last block in row does not have this shadow
+    if ((2 + position) % 18 != 0) {
         if (background[pos2 + 21] == map_shadow[2]) {
             // if there is a shadow edge, use full shadow
             background[pos2 + 21] = map_shadow[3];
@@ -102,7 +132,7 @@ void draw_blocks() {
     set_bkg_tiles(0, 0, 20, 18, background);
 }
 
-UINT8 mirrorDirection(UINT8 direction, UINT8 horizontal) {
+UINT8 mirror_direction(UINT8 direction, UINT8 horizontal) {
     // UINT8 ret = 0;
     if (horizontal) {
         return direction_max - direction;
@@ -113,7 +143,7 @@ UINT8 mirrorDirection(UINT8 direction, UINT8 horizontal) {
 }
 
 // use middleparts at 16-24
-void changePaddleSize(UINT8 size) {
+void change_paddle_size(UINT8 size) {
     UINT8 i;
     // respect minimum size
     if (size < 6) {
@@ -153,7 +183,7 @@ void changePaddleSize(UINT8 size) {
     paddle.size = size;
 }
 
-void movePaddle(UINT8 by) {
+void move_paddle(UINT8 by) {
     UINT8 i;
     paddle.position += by;
     for (i = paddle_left_start; i < paddle_right_end + ((paddle.size - 6) << 1);
@@ -263,7 +293,8 @@ void great_burst() {
     // load background tileset
     set_bkg_data(0, 59, great_burst_bg_data);
     // set level
-    memcpy(current_level, great_burst_level[0], 45);
+    // memcpy(current_level, great_burst_level[0], 45);
+    random_level(42);
     // fill level background
     draw_blocks();
     SHOW_BKG;
@@ -292,12 +323,12 @@ void great_burst() {
             if (tmp_x + ball.x > ((18 - 2) << 3)) {
                 // tmp_x = ((18-2)<<3) - ball.x;
                 tmp_x = 0;
-                ball.direction = mirrorDirection(ball.direction, 1);
+                ball.direction = mirror_direction(ball.direction, 1);
                 plonger(2);
             } else if ((ball.direction > direction_2nd_quarter) &&
                        ball.x < -tmp_x) {
                 tmp_x = ball.x;
-                ball.direction = mirrorDirection(ball.direction, 1);
+                ball.direction = mirror_direction(ball.direction, 1);
                 plonger(2);
             }
             // 17 double blocks high - ball height
@@ -306,12 +337,12 @@ void great_burst() {
                 // tmp_y = -(((17-2)<<3) - ball.y);
                 tmp_y = 0;
                 // change future ball direction
-                ball.direction = mirrorDirection(ball.direction, 0);
+                ball.direction = mirror_direction(ball.direction, 0);
                 plonger(2);
             } else if ((ball.direction > 6 && ball.direction <= 18) &&
                        ball.y < tmp_y) {
                 tmp_y = -ball.y;
-                ball.direction = mirrorDirection(ball.direction, 0);
+                ball.direction = mirror_direction(ball.direction, 0);
                 plonger(2);
             }
             // actually move ball
@@ -327,10 +358,10 @@ void great_burst() {
             ball.speed = (ball.speed + 2) % 8;
         }
         if (joypad() == (J_A | J_LEFT)) {
-            ball.direction = mirrorDirection(ball.direction, 1);
+            ball.direction = mirror_direction(ball.direction, 1);
         }
         if (joypad() == (J_A | J_UP)) {
-            ball.direction = mirrorDirection(ball.direction, 0);
+            ball.direction = mirror_direction(ball.direction, 0);
         }
 
         // unlock ball
@@ -350,23 +381,23 @@ void great_burst() {
                 ((18 - paddle.size) << 3)) { //*8*2
                 paddle.speed = ((18 - paddle.size) << 3) - paddle.position;
             }
-            movePaddle(paddle.speed);
+            move_paddle(paddle.speed);
             break;
         case J_LEFT:
             if (paddle.position < paddle.speed) {
                 paddle.speed = paddle.position;
             }
-            movePaddle(-paddle.speed);
+            move_paddle(-paddle.speed);
             break;
         case J_UP:
-            movePaddle(-paddle.position);
+            move_paddle(-paddle.position);
             break;
         case J_DOWN:
             // jump to the right
             if (!(joypad() & J_B)) { // jump to half paddle
-                movePaddle(((18 - paddle.size) << 3) - paddle.position);
+                move_paddle(((18 - paddle.size) << 3) - paddle.position);
             } else { // jump full
-                movePaddle(((18 - paddle.size) << 2) - paddle.position);
+                move_paddle(((18 - paddle.size) << 2) - paddle.position);
             }
             break;
         }
