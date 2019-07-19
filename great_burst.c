@@ -89,6 +89,10 @@ void great_burst(){
     UINT8 ball_direction = 1;
     UINT8 paddle = 0;
     UINT8 speed = 1;
+
+    INT8 tmp_x = 0;
+    INT8 tmp_y = 0;
+
     //set second color palette
     //dark grey and white get switched
     OBP1_REG = 0x26;//11000110
@@ -107,7 +111,7 @@ void great_burst(){
     set_sprite_tile(3,great_burst_fg_map[6*5]+1);
     move_sprite(3,8,8);
     for(i = 0; i < 4; ++i){
-        scroll_sprite(i, 5<<3, 15<<3);
+        scroll_sprite(i, 2<<3, 18<<3);
     }
 
     //draw paddle
@@ -142,21 +146,53 @@ void great_burst(){
     BGP_REG = 0xE4;
     while(1){
         //move ball
-        for(i = 0; i < 4; ++i){
-            if( ball_direction < 6 ){
-                scroll_sprite(i, ball_direction * ball_speed, (ball_direction-6) * ball_speed);
-            }else if( ball_direction < 12 ){
-                scroll_sprite(i, (12-ball_direction) * ball_speed, (ball_direction-6) * ball_speed);
-            }else if( ball_direction < 18 ){
-                scroll_sprite(i, (ball_direction-12) * -ball_speed, (18-ball_direction) * ball_speed);
-            }else if( ball_direction < 24 ){
-                scroll_sprite(i, (24-ball_direction) * -ball_speed, (18-ball_direction) * ball_speed);
-            }
 
+        tmp_x = 0;
+        tmp_y = 0;
+        if( ball_direction < 12 ){
+            tmp_y = (ball_direction-6) * ball_speed;
+        } else if( ball_direction < 24 ) {
+            tmp_y = (18-ball_direction) * ball_speed;
         }
+        if( ball_direction < 6 ){
+            tmp_x = ball_direction * ball_speed;
+        }else if( ball_direction < 12 ){
+            tmp_x = (12-ball_direction) * ball_speed;
+        }else if( ball_direction < 18 ){
+            tmp_x = (ball_direction-12) * -ball_speed;
+        }else if( ball_direction < 24 ){
+            tmp_x = (24-ball_direction) * -ball_speed;
+        }
+        //6 double blocks wide - ball width
+        if(tmp_x + ball_x > ((18-2)<<3)){
+            //tmp_x = ((18-2)<<3) - ball_x;
+            tmp_x = 0;
+            ball_direction = mirrorDirection(ball_direction, 1);
+        } else if(( ball_direction > 12 ) && ball_x < -tmp_x){
+            tmp_x = ball_x;
+            ball_direction = mirrorDirection(ball_direction, 1);
+        }
+        //17 double blocks high - ball height
+        if( ball_y - tmp_y > ((17-2)<<3) ){
+            //mirror ball path partly
+            //tmp_y = -(((17-2)<<3) - ball_y);
+            tmp_y = 0;
+            //change future ball direction
+            ball_direction = mirrorDirection(ball_direction, 0);
+        } else if((ball_direction > 6 && ball_direction <= 18) && ball_y < tmp_y){
+            tmp_y = -ball_y;
+            ball_direction = mirrorDirection(ball_direction, 0);
+        }
+        //actually move ball
+        for(i = 0; i < 4; ++i){
+            scroll_sprite(i, tmp_x, tmp_y);
+        }
+        //move theoretic ball
+        ball_x += tmp_x;
+        ball_y -= tmp_y;
         //cheat & debug codes
         if(joypad() == (J_A | J_DOWN)){
-            speed = (speed + 2)%8;
+            ball_speed = (ball_speed + 2)%8;
         }
         if(joypad() == (J_A | J_LEFT)){
             ball_direction = mirrorDirection(ball_direction, 1);
