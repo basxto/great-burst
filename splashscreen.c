@@ -17,21 +17,21 @@
 #define splashscreen_a_xoffset 4
 #define splashscreen_line_width 10
 
-// make a bling sound wiith three notes
+// make a bling sound with three notes
 void bling() {
     NR10_REG = 0x00; // no sweep
     NR11_REG = 0x50; // 50% duty
 
-    NR12_REG = 0xF0;                                    // volume envelope
+    NR12_REG = 0xF0; // constant volume envelope
     NR14_REG = 0xC0 | ((notes[4][note_d] >> 8) & 0x07); // msb
     NR13_REG = notes[4][note_d] & 0xFF;                 // lsb
     wait_vbl_done();
     wait_vbl_done();
     wait_vbl_done();
     wait_vbl_done();
-    NR12_REG = 0xF0;                                    // volume envelope
-    NR14_REG = 0xC0 | ((notes[4][note_f] >> 8) & 0x07); // msb
-    NR13_REG = notes[4][note_f] & 0xFF;                 // lsb
+    NR12_REG = 0xF0;
+    NR14_REG = 0xC0 | ((notes[4][note_f] >> 8) & 0x07);
+    NR13_REG = notes[4][note_f] & 0xFF;
     wait_vbl_done();
     wait_vbl_done();
     wait_vbl_done();
@@ -40,9 +40,9 @@ void bling() {
     wait_vbl_done();
     wait_vbl_done();
     wait_vbl_done();
-    NR12_REG = 0xF1;                                      // volume envelope
-    NR14_REG = 0xC0 | ((notes[5][note_cis] >> 8) & 0x07); // msb
-    NR13_REG = notes[5][note_cis] & 0xFF;                 // lsb
+    NR12_REG = 0xF1; // falling volume envelope
+    NR14_REG = 0xC0 | ((notes[5][note_cis] >> 8) & 0x07);
+    NR13_REG = notes[5][note_cis] & 0xFF;
 }
 
 // moves head in 'background' array
@@ -214,4 +214,10 @@ void splash() {
         }
         delay(100);
     };
+
+    // clean up
+    for (i = 0; i < 32; ++i) {
+        move_sprite(i, 0, 0);
+        set_sprite_prop(i, 0x00);
+    }
 }
