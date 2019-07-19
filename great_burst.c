@@ -11,17 +11,41 @@
 #include "pix/great_burst_fg_data.c"
 #include "pix/great_burst_fg_map.c"
 
+// defines for sprite management
+#define ball_start 0
+#define ball_end 4
+#define paddle_left_start 4
+#define paddle_left_end 10
+#define paddle_right_start 10
+#define paddle_right_end 16
+#define paddle_middle_start 16
+#define paddle_middle_end 24
+#define direction_max 24
+#define direction_1st_quarter (direction_max >> 2)
+#define direction_2nd_quarter (direction_max >> 1)
+#define direction_3rd_quarter (direction_max >> 2) * 3
+#define direction_4th_quarter direction_max
+
 // field is 9 blocks wide and blocks high 10
 // one UINT8 is 2 blocks => 2 rows = 9byte
 
 typedef struct {
-    UINT8 x;// : 8;
-    UINT8 y;// : 8;
-    UINT8 speed;// : 2; // 0-2; 2 bit
-    UINT8 locked;// : 1;    // 1 bit
+    UINT8 x;      // : 8;
+    UINT8 y;      // : 8;
+    UINT8 speed;  // : 2; // 0-2; 2 bit
+    UINT8 locked; // : 1;    // 1 bit
     // 0 is up; 3 is 45 degree to the right; 6 is right; 12 is down...
-    UINT8 direction;// : 5; // 0-23; 5bit
+    UINT8 direction; // : 5; // 0-23; 5bit
 } Ball;
+
+typedef struct {
+    UINT8 position;
+    UINT8 speed;
+    UINT8 size;
+} Paddle;
+
+Ball ball = {0, 0, 1, 1, 1};
+Paddle paddle = {0, 1, 0};
 
 UINT8 current_level[45];
 const UINT8 map_block[] = {0x05, 0x11, 0x1D, 0x27, 0x06, 0x13, 0x1F, 0x29};
@@ -81,42 +105,41 @@ void draw_blocks() {
 UINT8 mirrorDirection(UINT8 direction, UINT8 horizontal) {
     // UINT8 ret = 0;
     if (horizontal) {
-        return 24 - direction;
+        return direction_max - direction;
     } else {
-        return 24 - ((direction + 12) % 24);
+        return direction_max -
+               ((direction + (direction_max >> 1)) % direction_max);
     }
 }
 
-void plonger(UINT8 note){
-    NR10_REG = 0x13;//arpeggio | 3
-    NR11_REG = 0x50;//50% duty
-    NR12_REG = 0xF7;//volume envelope
-    switch(note) {
-    case 0://break
-        NR13_REG = 0x7F;//lsb
-        NR14_REG = 0xC2;//msb
+// sound effect generator
+void plonger(UINT8 note) {
+    NR10_REG = 0x13; // arpeggio | 3
+    NR11_REG = 0x50; // 50% duty
+    NR12_REG = 0xF7; // volume envelope
+    switch (note) {
+    case 0:              // break
+        NR13_REG = 0x7F; // lsb
+        NR14_REG = 0xC2; // msb
         break;
-    case 1://paddle
-        NR13_REG = 0x00;//lsb
-        NR14_REG = 0xC3;//msb
+    case 1:              // paddle
+        NR13_REG = 0x00; // lsb
+        NR14_REG = 0xC3; // msb
         break;
-    case 3://shoot
-        NR10_REG = 0x14;//arpeggio | 4
-        NR13_REG = 0x70;//lsb
-        NR14_REG = 0xC4;//msb
+    case 3:              // shoot
+        NR10_REG = 0x14; // arpeggio | 4
+        NR13_REG = 0x70; // lsb
+        NR14_REG = 0xC4; // msb
     case 2:
-    default://wall
-        NR13_REG = 0x00;//lsb
-        NR14_REG = 0xC4;//msb
+    default:             // wall
+        NR13_REG = 0x00; // lsb
+        NR14_REG = 0xC4; // msb
     }
 }
 
 void great_burst() {
     UINT8 changed = 0;
     UINT8 i;
-    Ball ball = {0, 0, 1, 1, 1};
-    UINT8 paddle = 0;
-    UINT8 speed = 1;
 
     INT8 tmp_x = 0;
     INT8 tmp_y = 0;
@@ -129,44 +152,44 @@ void great_burst() {
     set_sprite_data(0, 59, great_burst_fg_data);
 
     // draw ball
-    set_sprite_tile(0, great_burst_fg_map[6 * 4]);
-    move_sprite(0, 0, 0);
-    set_sprite_prop(0, S_PALETTE);
-    set_sprite_tile(1, great_burst_fg_map[6 * 4 + 1]);
-    move_sprite(1, 8, 0);
-    set_sprite_tile(2, great_burst_fg_map[6 * 5]);
-    move_sprite(2, 0, 8);
-    set_sprite_tile(3, great_burst_fg_map[6 * 5] + 1);
-    move_sprite(3, 8, 8);
+    set_sprite_tile(ball_start, great_burst_fg_map[6 * 4]);
+    move_sprite(ball_start, 0, 0);
+    set_sprite_prop(ball_start + 0, S_PALETTE);
+    set_sprite_tile(ball_start + 1, great_burst_fg_map[6 * 4 + 1]);
+    move_sprite(ball_start + 1, 8, 0);
+    set_sprite_tile(ball_start + 2, great_burst_fg_map[6 * 5]);
+    move_sprite(ball_start + 2, 0, 8);
+    set_sprite_tile(ball_start + 3, great_burst_fg_map[6 * 5] + 1);
+    move_sprite(ball_start + 3, 8, 8);
     // place on 0,0
-    for (i = 0; i < 4; ++i) {
+    for (i = ball_start; i < ball_end; ++i) {
         scroll_sprite(i, 2 << 3, 18 << 3);
     }
     // place 16, 16
-    for (i = 0; i < 4; ++i) {
+    for (i = ball_start; i < ball_end; ++i) {
         scroll_sprite(i, 16, -16);
     }
     ball.x = ball.y = 16;
 
     // draw paddle
     // left and right side
-    for (i = 0; i < 12; ++i) {
-        set_sprite_tile(4 + i, great_burst_fg_map[i]);
-        move_sprite(4 + i, (i % 6) << 3, (i / 6) << 3);
+    for (i = 0; i < paddle_right_end - paddle_left_start; ++i) {
+        set_sprite_tile(paddle_left_start + i, great_burst_fg_map[i]);
+        move_sprite(paddle_left_start + i, (i % 6) << 3, (i / 6) << 3);
     }
-    set_sprite_prop(4 + 2, S_PALETTE);
-    set_sprite_prop(4 + 3, S_PALETTE);
+    set_sprite_prop(paddle_left_start + 2, S_PALETTE);
+    set_sprite_prop(paddle_left_start + 3, S_PALETTE);
 
     // move to left
-    for (i = 4; i < 16; ++i) {
+    for (i = paddle_left_start; i < paddle_right_end; ++i) {
         scroll_sprite(i, 2 << 3, 18 << 3);
     }
     // middle parts, but this will stay hidden for now
-    for (i = 0; i < 8; i += 2) {
-        set_sprite_tile(16 + i, great_burst_fg_map[6 * 2]);
-        set_sprite_prop(16 + i, S_PALETTE);
-        set_sprite_tile(17 + i, great_burst_fg_map[6 * 3]);
-        move_sprite(17 + i, 0, 8);
+    for (i = paddle_middle_start; i < paddle_middle_end; i += 2) {
+        set_sprite_tile(i, great_burst_fg_map[6 * 2]);
+        set_sprite_prop(i, S_PALETTE);
+        set_sprite_tile(i, great_burst_fg_map[6 * 3]);
+        move_sprite(i, 0, 8);
     }
 
     // load background tileset
@@ -183,19 +206,19 @@ void great_burst() {
             // move ball
             tmp_x = 0;
             tmp_y = 0;
-            if (ball.direction < 12) {
-                tmp_y = (ball.direction - 6) * ball.speed;
-            } else if (ball.direction < 24) {
-                tmp_y = (18 - ball.direction) * ball.speed;
+            if (ball.direction < direction_2nd_quarter) {
+                tmp_y = (ball.direction - direction_1st_quarter) * ball.speed;
+            } else if (ball.direction < direction_4th_quarter) {
+                tmp_y = (direction_3rd_quarter - ball.direction) * ball.speed;
             }
-            if (ball.direction < 6) {
+            if (ball.direction < direction_1st_quarter) {
                 tmp_x = ball.direction * ball.speed;
-            } else if (ball.direction < 12) {
-                tmp_x = (12 - ball.direction) * ball.speed;
-            } else if (ball.direction < 18) {
-                tmp_x = (ball.direction - 12) * -ball.speed;
-            } else if (ball.direction < 24) {
-                tmp_x = (24 - ball.direction) * -ball.speed;
+            } else if (ball.direction < direction_2nd_quarter) {
+                tmp_x = (direction_2nd_quarter - ball.direction) * ball.speed;
+            } else if (ball.direction < direction_3rd_quarter) {
+                tmp_x = (ball.direction - direction_2nd_quarter) * -ball.speed;
+            } else if (ball.direction < direction_4th_quarter) {
+                tmp_x = (direction_4th_quarter - ball.direction) * -ball.speed;
             }
             // 6 double blocks wide - ball width
             if (tmp_x + ball.x > ((18 - 2) << 3)) {
@@ -203,7 +226,8 @@ void great_burst() {
                 tmp_x = 0;
                 ball.direction = mirrorDirection(ball.direction, 1);
                 plonger(2);
-            } else if ((ball.direction > 12) && ball.x < -tmp_x) {
+            } else if ((ball.direction > direction_2nd_quarter) &&
+                       ball.x < -tmp_x) {
                 tmp_x = ball.x;
                 ball.direction = mirrorDirection(ball.direction, 1);
                 plonger(2);
@@ -241,85 +265,85 @@ void great_burst() {
             ball.direction = mirrorDirection(ball.direction, 0);
         }
 
-        //unlock ball
+        // unlock ball
         if (ball.locked && joypad() & J_A) {
             ball.locked = 0;
             plonger(3);
         }
         // control paddle
-        speed = 2;
+        paddle.speed = 2;
         if (joypad() & J_B) {
-            speed = 4;
+            paddle.speed = 4;
         }
         // only check directions
         switch (joypad() & 0x0F) {
         case J_RIGHT:
-            if (paddle + speed > ((9 - 3) << 4)) { //*8*2
-                speed = ((9 - 3) << 4) - paddle;
+            if (paddle.position + paddle.speed > ((9 - 3) << 4)) { //*8*2
+                paddle.speed = ((9 - 3) << 4) - paddle.position;
             }
-            paddle += speed;
-            for (i = 4; i < 16; ++i) {
-                scroll_sprite(i, speed, 0);
+            paddle.position += paddle.speed;
+            for (i = paddle_left_start; i < paddle_right_end; ++i) {
+                scroll_sprite(i, paddle.speed, 0);
             }
-            if(ball.locked){
-                for (i = 0; i < 4; ++i) {
-                    scroll_sprite(i, speed, 0);
+            if (ball.locked) {
+                for (i = ball_start; i < ball_end; ++i) {
+                    scroll_sprite(i, paddle.speed, 0);
                 }
-                ball.x += speed;
+                ball.x += paddle.speed;
             }
             break;
         case J_LEFT:
-            if (paddle < speed) {
-                speed = paddle;
+            if (paddle.position < paddle.speed) {
+                paddle.speed = paddle.position;
             }
-            paddle -= speed;
-            for (i = 4; i < 16; ++i) {
-                scroll_sprite(i, -speed, 0);
+            paddle.position -= paddle.speed;
+            for (i = paddle_left_start; i < paddle_right_end; ++i) {
+                scroll_sprite(i, -paddle.speed, 0);
             }
-            if(ball.locked){
-                for (i = 0; i < 4; ++i) {
-                    scroll_sprite(i, -speed, 0);
+            if (ball.locked) {
+                for (i = ball_start; i < ball_end; ++i) {
+                    scroll_sprite(i, -paddle.speed, 0);
                 }
-                ball.x -= speed;
+                ball.x -= paddle.speed;
             }
             break;
         case J_UP:
             // jump to the left
-            for (i = 4; i < 16; ++i) {
-                scroll_sprite(i, -paddle, 0);
+            for (i = paddle_left_start; i < paddle_right_end; ++i) {
+                scroll_sprite(i, -paddle.position, 0);
             }
-            if(ball.locked){
-                for (i = 0; i < 4; ++i) {
-                    scroll_sprite(i, -paddle, 0);
+            if (ball.locked) {
+                for (i = ball_start; i < ball_end; ++i) {
+                    scroll_sprite(i, -paddle.position, 0);
                 }
-                ball.x -= paddle;
+                ball.x -= paddle.position;
             }
-            paddle = 0;
+            paddle.position = 0;
             break;
         case J_DOWN:
             // jump to the right
             if (!(joypad() & J_B)) { // jump to half paddle
-                for (i = 4; i < 16; ++i) {
-                    scroll_sprite(i, ((9 - 3) << 4) - paddle, 0);
+                for (i = paddle_left_start; i < paddle_right_end; ++i) {
+                    scroll_sprite(i, ((9 - 3) << 4) - paddle.position, 0);
                 }
-                if(ball.locked){
-                    for (i = 0; i < 4; ++i) {
-                        scroll_sprite(i, ((9 - 3) << 4) - paddle, 0);
+                if (ball.locked) {
+                    for (i = ball_start; i < ball_end; ++i) {
+                        scroll_sprite(i, ((9 - 3) << 4) - paddle.position, 0);
                     }
-                    ball.x += ((9 - 3) << 4) - paddle;
+                    ball.x += ((9 - 3) << 4) - paddle.position;
                 }
-                paddle = ((9 - 3) << 4);
+                paddle.position = ((9 - 3) << 4);
             } else { // jump to half paddle (additional /2)
-                for (i = 4; i < 16; ++i) {
-                    scroll_sprite(i, ((9 - 3) << 3) - paddle, 0);
+                for (i = paddle_left_start; i < paddle_right_end; ++i) {
+                    scroll_sprite(i, ((9 - 3) << 3) - paddle.position, 0);
                 }
-                if(ball.locked){
-                    for (i = 0; i < 4; ++i) {
-                        scroll_sprite(i, ((9 - 3) << 3) - paddle, 0);
+                if (ball.locked) {
+                    for (i = ball_start; i < ball_end; ++i) {
+                        scroll_sprite(i, ((9 - 3) << 3) - paddle.position, 0);
                     }
-                    ball.x += ((9 - 3) << 3) - paddle;
+                    ball.x += ((9 - 3) << 3) - paddle.position;
                 }
-                paddle = ((9 - 3) << 3);
+                paddle.position = ((9 - 3) << 3);
             }
             break;
         }
