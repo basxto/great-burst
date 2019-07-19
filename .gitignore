@@ -1,0 +1,7 @@
+*_map.c
+*_data.c
+*.o
+*.gb
+*.map
+*.lst
+*.sym

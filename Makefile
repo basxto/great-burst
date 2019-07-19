@@ -9,8 +9,8 @@ build: pix/oga_splash_data.c pix/oga_splash_movable_data.c
 run:
 	$(emulator) ./main.gb
 
-%_data.c:
-	$(pngconvert) $*.png
+%_data.c: %.png
+	$(pngconvert) $^
 
 clean:
 	rm *.gb *.o *.map *.lst *.sym pix/*_map.c pix/*_data.c
