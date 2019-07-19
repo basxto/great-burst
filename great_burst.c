@@ -87,6 +87,30 @@ UINT8 mirrorDirection(UINT8 direction, UINT8 horizontal) {
     }
 }
 
+void plonger(UINT8 note){
+    NR10_REG = 0x13;//arpeggio | 3
+    NR11_REG = 0x50;//50% duty
+    NR12_REG = 0xF7;//volume envelope
+    switch(note) {
+    case 0://break
+        NR13_REG = 0x7F;//lsb
+        NR14_REG = 0xC2;//msb
+        break;
+    case 1://paddle
+        NR13_REG = 0x00;//lsb
+        NR14_REG = 0xC3;//msb
+        break;
+    case 3://shoot
+        NR10_REG = 0x14;//arpeggio | 4
+        NR13_REG = 0x70;//lsb
+        NR14_REG = 0xC4;//msb
+    case 2:
+    default://wall
+        NR13_REG = 0x00;//lsb
+        NR14_REG = 0xC4;//msb
+    }
+}
+
 void great_burst() {
     UINT8 changed = 0;
     UINT8 i;
@@ -178,9 +202,11 @@ void great_burst() {
                 // tmp_x = ((18-2)<<3) - ball.x;
                 tmp_x = 0;
                 ball.direction = mirrorDirection(ball.direction, 1);
+                plonger(2);
             } else if ((ball.direction > 12) && ball.x < -tmp_x) {
                 tmp_x = ball.x;
                 ball.direction = mirrorDirection(ball.direction, 1);
+                plonger(2);
             }
             // 17 double blocks high - ball height
             if (ball.y - tmp_y > ((17 - 2) << 3)) {
@@ -189,10 +215,12 @@ void great_burst() {
                 tmp_y = 0;
                 // change future ball direction
                 ball.direction = mirrorDirection(ball.direction, 0);
+                plonger(2);
             } else if ((ball.direction > 6 && ball.direction <= 18) &&
                        ball.y < tmp_y) {
                 tmp_y = -ball.y;
                 ball.direction = mirrorDirection(ball.direction, 0);
+                plonger(2);
             }
             // actually move ball
             for (i = 0; i < 4; ++i) {
@@ -214,8 +242,9 @@ void great_burst() {
         }
 
         //unlock ball
-        if (joypad() & J_A) {
+        if (ball.locked && joypad() & J_A) {
             ball.locked = 0;
+            plonger(3);
         }
         // control paddle
         speed = 2;
