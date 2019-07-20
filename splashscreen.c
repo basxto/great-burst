@@ -192,9 +192,37 @@ void splash() {
     }
     HIDE_SPRITES;
     set_bkg_tiles(0, 0, 20, 18, background);
+    // clean up sprites
+    for (i = 0; i < 32; ++i) {
+        move_sprite(i, 0, 0);
+        set_sprite_prop(i, 0x00);
+    }
     delay(1000);
     set_bkg_tiles(0, 0, 20, 18, oga_splash_map);
+    set_sprite_tile(0, oga_splash_movable_map[splashscreen_line_width + 2]);
+    move_sprite(0, 3 << 3, 9 << 3);
+    // set_sprite_prop(0, S_PALETTE);
+    set_sprite_tile(1, oga_splash_movable_map[splashscreen_line_width + 3]);
+    move_sprite(1, 4 << 3, 9 << 3);
+    set_sprite_prop(1, S_PALETTE);
+    set_sprite_tile(2, oga_splash_movable_map[splashscreen_line_width + 4]);
+    move_sprite(2, 4 << 3, 10 << 3);
+    set_sprite_prop(2, S_PALETTE);
+    // modify main palette
+    // dark grey and white get switched
+    // also light grey becomes dark grey
+    OBP0_REG = 0xCA; // 11001010 
+    SHOW_SPRITES;
     bling();
+    delay(100);
+    HIDE_SPRITES;
+    // clean up again
+    for (i = 0; i < 4; i++) {
+        move_sprite(i, 0, 0);
+        set_sprite_prop(i, 0x00);
+    }
+    // reset main palette
+    OBP0_REG = 0xE4;//11100100
     delay(1000);
     // fadeout
     for (i = 0; i < 4; i++) {
@@ -214,10 +242,4 @@ void splash() {
         }
         delay(100);
     };
-
-    // clean up
-    for (i = 0; i < 32; ++i) {
-        move_sprite(i, 0, 0);
-        set_sprite_prop(i, 0x00);
-    }
 }
