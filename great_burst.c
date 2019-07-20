@@ -223,6 +223,28 @@ void plonger(UINT8 note) {
     }
 }
 
+void fade_in(){
+    UINT8 i;
+    // fadein
+    for (i = 0; i < 4; i++) {
+        switch (i) {
+        case 0:
+            BGP_REG = 0xFF;
+            break;
+        case 1:
+            BGP_REG = 0xFE;
+            break;
+        case 2:
+            BGP_REG = 0xF9;
+            break;
+        case 3:
+            BGP_REG = 0xE4;
+            break;
+        }
+        delay(100);
+    };
+}
+
 void great_burst() {
     UINT8 changed = 0;
     UINT8 i;
@@ -298,8 +320,8 @@ void great_burst() {
     // fill level background
     draw_blocks();
     SHOW_BKG;
+    fade_in();
     SHOW_SPRITES;
-    BGP_REG = 0xE4;
     while (1) {
         if (!ball.locked) {
             // move ball
