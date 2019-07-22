@@ -31,7 +31,8 @@
 #define block_width 16
 #define block_height 8
 // TODO: field width 8 would be faster to calculate with bit shifting
-#define field_width 9
+// don't change this only works with 8
+#define field_width 8
 #define field_height 10
 
 // field is 9 blocks wide and blocks high 10
@@ -55,7 +56,7 @@ typedef struct {
 Ball ball = {0, 0, 1, 1, 1};
 Paddle paddle = {0, 1, 6};
 
-UINT8 current_level[45];
+UINT8 current_level[((field_width * field_height) >> 1)];
 const UINT8 map_block[] = {0x05, 0x11, 0x1D, 0x27, 0x06, 0x13, 0x1F, 0x29};
 const UINT8 map_shadow[] = {0x31, 0x32, 0x34, 0x15, 0x08, 0x33};
 
@@ -95,7 +96,7 @@ UINT8 random_block(UINT8 ran) {
 void random_level(UINT16 seed) {
     UINT8 i;
     initrand(seed);
-    for (i = 0; i < 45; i++) {
+    for (i = 0; i < ((field_width * field_height) >> 1); i++) {
         current_level[i] = random_block(rand() % 100);
         current_level[i] |= (random_block(rand() % 100)) << 4;
     }
@@ -103,7 +104,7 @@ void random_level(UINT16 seed) {
 
 void one_block_level(UINT8 block) {
     UINT8 i;
-    for (i = 0; i < 45; i++) {
+    for (i = 0; i < ((field_width * field_height) >> 1); i++) {
         current_level[i] = block & 0x0F;
         current_level[i] |= (block & 0x0F) << 4;
     }
@@ -117,7 +118,7 @@ void draw_blocks() {
     memcpy(background, great_burst_bg_map_clear, 360);
     // place blocks
     // two blocks share one integer
-    for (i = 0; i < (45 << 1); ++i) {
+    for (i = 0; i < (field_width * field_height); ++i) {
         // 20 per line 1 offset
         // first block is border
         if (i % 2 == 0) {
@@ -134,9 +135,12 @@ void draw_blocks() {
                 continue;
             }
         }
-        pos0 = 20 * ((0 + position) / 18) + (0 + position) % 18;
-        pos1 = 20 * ((1 + position) / 18) + (1 + position) % 18;
-        pos2 = 20 * ((2 + position) / 18) + (2 + position) % 18;
+        pos0 = 20 * ((0 + position) / (field_width << 1)) +
+               (0 + position) % (field_width << 1);
+        pos1 = 20 * ((1 + position) / (field_width << 1)) +
+               (1 + position) % (field_width << 1);
+        pos2 = 20 * ((2 + position) / (field_width << 1)) +
+               (2 + position) % (field_width << 1);
         // row + offset (1 row + 1 column=21) + column
         background[pos0 + 21] = map_block[block];
         background[pos1 + 21] = map_block[block] + 1;
@@ -149,7 +153,7 @@ void draw_blocks() {
         }
         background[pos1 + 41] = map_shadow[1];
         // last block in row does not have this shadow
-        if ((2 + position) % 18 != 0) {
+        if ((2 + position) % (field_width << 1) != 0) {
             if (background[pos2 + 21] == map_shadow[2]) {
                 // if there is a shadow edge, use full shadow
                 background[pos2 + 21] = map_shadow[3];
@@ -379,9 +383,9 @@ void great_burst() {
     // load background tileset
     set_bkg_data(0, 59, great_burst_bg_data);
     // set level
-    // memcpy(current_level, great_burst_level[0], 45);
+    memcpy(current_level, great_burst_level[0], 45);
     // random_level(42);
-    one_block_level(0x01);
+    // one_block_level(0x01);
     // fill level background
     draw_blocks();
     SHOW_BKG;
@@ -407,7 +411,7 @@ void great_burst() {
                 tmp_x = (direction_4th_quarter - ball.direction) * -ball.speed;
             }
             // 6 double blocks wide - ball width
-            if (tmp_x + ball.x > ((18 - 2) << 3)) {
+            if (tmp_x + ball.x > (((field_width << 1) - 2) << 3)) {
                 // tmp_x = ((18-2)<<3) - ball.x;
                 tmp_x = 0;
                 ball.direction = mirror_direction(ball.direction, 1);
@@ -426,7 +430,8 @@ void great_burst() {
                 // change future ball direction
                 ball.direction = mirror_direction(ball.direction, 0);
                 plonger(2);
-            } else if ((ball.direction > 6 && ball.direction <= 18) &&
+            } else if ((ball.direction > 6 &&
+                        ball.direction <= direction_3rd_quarter) &&
                        ball.y < tmp_y) {
                 tmp_y = -ball.y;
                 ball.direction = mirror_direction(ball.direction, 0);
@@ -465,8 +470,9 @@ void great_burst() {
         switch (joypad() & 0x0F) {
         case J_RIGHT:
             if (paddle.position + paddle.speed >
-                ((18 - paddle.size) << 3)) { //*8*2
-                paddle.speed = ((18 - paddle.size) << 3) - paddle.position;
+                (((field_width << 1) - paddle.size) << 3)) { //*8*2
+                paddle.speed =
+                    (((field_width << 1) - paddle.size) << 3) - paddle.position;
             }
             move_paddle(paddle.speed);
             break;
@@ -482,9 +488,11 @@ void great_burst() {
         case J_DOWN:
             // jump to the right
             if (!(joypad() & J_B)) { // jump to half paddle
-                move_paddle(((18 - paddle.size) << 3) - paddle.position);
+                move_paddle((((field_width << 1) - paddle.size) << 3) -
+                            paddle.position);
             } else { // jump full
-                move_paddle(((18 - paddle.size) << 2) - paddle.position);
+                move_paddle((((field_width << 1) - paddle.size) << 2) -
+                            paddle.position);
             }
             break;
         }
