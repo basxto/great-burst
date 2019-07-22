@@ -94,52 +94,58 @@ void random_level(UINT16 seed) {
     }
 }
 
-void draw_block(UINT8 position, UINT8 block) {
-    const UINT8 pos0 = 20 * ((0 + position) / 18) + (0 + position) % 18;
-    const UINT8 pos1 = 20 * ((1 + position) / 18) + (1 + position) % 18;
-    const UINT8 pos2 = 20 * ((2 + position) / 18) + (2 + position) % 18;
-    // row + offset (1 row + 1 column=21) + column
-    background[pos0 + 21] = map_block[block];
-    background[pos1 + 21] = map_block[block] + 1;
-    // draw shadow
-    if (background[pos0 + 41] == map_shadow[2]) {
-        // if there is a shadow edge, use full shadow
-        background[pos0 + 41] = map_shadow[1];
-    } else {
-        background[pos0 + 41] = map_shadow[0];
-    }
-    background[pos1 + 41] = map_shadow[1];
-    // last block in row does not have this shadow
-    if ((2 + position) % 18 != 0) {
-        if (background[pos2 + 21] == map_shadow[2]) {
-            // if there is a shadow edge, use full shadow
-            background[pos2 + 21] = map_shadow[3];
-        } else if (background[pos2 + 21] == map_block[0]) {
-            // if there is shadow above use double shadow
-            background[pos2 + 21] = map_shadow[4];
-        } else {
-            background[pos2 + 21] = map_shadow[5];
-        }
-        background[pos2 + 41] = map_shadow[2];
-    }
-}
-
 // directly modifies background variable
 // always draws current_level
 void draw_blocks() {
-    UINT8 i;
+    UINT8 i, position, block, pos0, pos1, pos2;
     // load empty level background
     memcpy(background, great_burst_bg_map_clear, 360);
     // place blocks
-    for (i = 0; i < 45; ++i) {
+    //two blocks share one integer
+    for (i = 0; i < (45<<1); ++i) {
         // 20 per line 1 offset
         // first block is border
-        if (((current_level[i] >> 4) & 0x07) != 0) {
-            draw_block((i << 2), (current_level[i] >> 4) & 0x07);
+        if (i%2==0) {
+            position = ((i>>1)<<2);
+            block = (current_level[i>>1] >> 4) & 0x07;
+            if(block == 0){
+                continue;
+            }
         }
-        if ((current_level[i] & 0x07) != 0) {
-            draw_block((i << 2) + 2, current_level[i] & 0x07);
+        if (i%2==1) {
+            position = ((i>>1)<<2) + 2;
+            block = current_level[i>>1] & 0x07;
+            if(block == 0){
+                continue;
+            }
         }
+            pos0 = 20 * ((0 + position) / 18) + (0 + position) % 18;
+            pos1 = 20 * ((1 + position) / 18) + (1 + position) % 18;
+            pos2 = 20 * ((2 + position) / 18) + (2 + position) % 18;
+            // row + offset (1 row + 1 column=21) + column
+            background[pos0 + 21] = map_block[block];
+            background[pos1 + 21] = map_block[block] + 1;
+            // draw shadow
+            if (background[pos0 + 41] == map_shadow[2]) {
+                // if there is a shadow edge, use full shadow
+                background[pos0 + 41] = map_shadow[1];
+            } else {
+                background[pos0 + 41] = map_shadow[0];
+            }
+            background[pos1 + 41] = map_shadow[1];
+            // last block in row does not have this shadow
+            if ((2 + position) % 18 != 0) {
+                if (background[pos2 + 21] == map_shadow[2]) {
+                    // if there is a shadow edge, use full shadow
+                    background[pos2 + 21] = map_shadow[3];
+                } else if (background[pos2 + 21] == map_block[0]) {
+                    // if there is shadow above use double shadow
+                    background[pos2 + 21] = map_shadow[4];
+                } else {
+                    background[pos2 + 21] = map_shadow[5];
+                }
+                background[pos2 + 41] = map_shadow[2];
+            }
     }
     // update
     set_bkg_tiles(0, 0, 20, 18, background);
@@ -302,8 +308,8 @@ void great_burst() {
     // load background tileset
     set_bkg_data(0, 59, great_burst_bg_data);
     // set level
-    // memcpy(current_level, great_burst_level[0], 45);
-    random_level(42);
+     memcpy(current_level, great_burst_level[0], 45);
+    //random_level(42);
     // fill level background
     draw_blocks();
     SHOW_BKG;
