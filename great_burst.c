@@ -21,11 +21,18 @@
 #define paddle_right_end 16
 #define paddle_middle_start 16
 #define paddle_middle_end 24
+// TODO: 32 directions are probably easier to calculate
 #define direction_max 24
 #define direction_1st_quarter (direction_max >> 2)
 #define direction_2nd_quarter (direction_max >> 1)
 #define direction_3rd_quarter (direction_1st_quarter + direction_2nd_quarter)
 #define direction_4th_quarter direction_max
+
+#define block_width 16
+#define block_height 8
+// TODO: field width 8 would be faster to calculate with bit shifting
+#define field_width 9
+#define field_height 10
 
 // field is 9 blocks wide and blocks high 10
 // one UINT8 is 2 blocks => 2 rows = 9byte
@@ -53,7 +60,7 @@ const UINT8 map_block[] = {0x05, 0x11, 0x1D, 0x27, 0x06, 0x13, 0x1F, 0x29};
 const UINT8 map_shadow[] = {0x31, 0x32, 0x34, 0x15, 0x08, 0x33};
 
 // macro functions
-
+#define diff(a, b) ((a) > (b) ? (a) - (b) : (b) - (a))
 // should receive good optimization if horizontal is a constant
 #define mirror_direction(direction, horizontal)                                \
     (direction_max -                                                           \
@@ -94,6 +101,14 @@ void random_level(UINT16 seed) {
     }
 }
 
+void one_block_level(UINT8 block) {
+    UINT8 i;
+    for (i = 0; i < 45; i++) {
+        current_level[i] = block & 0x0F;
+        current_level[i] |= (block & 0x0F) << 4;
+    }
+}
+
 // directly modifies background variable
 // always draws current_level
 void draw_blocks() {
@@ -101,54 +116,110 @@ void draw_blocks() {
     // load empty level background
     memcpy(background, great_burst_bg_map_clear, 360);
     // place blocks
-    //two blocks share one integer
-    for (i = 0; i < (45<<1); ++i) {
+    // two blocks share one integer
+    for (i = 0; i < (45 << 1); ++i) {
         // 20 per line 1 offset
         // first block is border
-        if (i%2==0) {
-            position = ((i>>1)<<2);
-            block = (current_level[i>>1] >> 4) & 0x07;
-            if(block == 0){
+        if (i % 2 == 0) {
+            position = ((i >> 1) << 2);
+            block = (current_level[i >> 1] >> 4) & 0x07;
+            if (block == 0) {
                 continue;
             }
         }
-        if (i%2==1) {
-            position = ((i>>1)<<2) + 2;
-            block = current_level[i>>1] & 0x07;
-            if(block == 0){
+        if (i % 2 == 1) {
+            position = ((i >> 1) << 2) + 2;
+            block = current_level[i >> 1] & 0x07;
+            if (block == 0) {
                 continue;
             }
         }
-            pos0 = 20 * ((0 + position) / 18) + (0 + position) % 18;
-            pos1 = 20 * ((1 + position) / 18) + (1 + position) % 18;
-            pos2 = 20 * ((2 + position) / 18) + (2 + position) % 18;
-            // row + offset (1 row + 1 column=21) + column
-            background[pos0 + 21] = map_block[block];
-            background[pos1 + 21] = map_block[block] + 1;
-            // draw shadow
-            if (background[pos0 + 41] == map_shadow[2]) {
+        pos0 = 20 * ((0 + position) / 18) + (0 + position) % 18;
+        pos1 = 20 * ((1 + position) / 18) + (1 + position) % 18;
+        pos2 = 20 * ((2 + position) / 18) + (2 + position) % 18;
+        // row + offset (1 row + 1 column=21) + column
+        background[pos0 + 21] = map_block[block];
+        background[pos1 + 21] = map_block[block] + 1;
+        // draw shadow
+        if (background[pos0 + 41] == map_shadow[2]) {
+            // if there is a shadow edge, use full shadow
+            background[pos0 + 41] = map_shadow[1];
+        } else {
+            background[pos0 + 41] = map_shadow[0];
+        }
+        background[pos1 + 41] = map_shadow[1];
+        // last block in row does not have this shadow
+        if ((2 + position) % 18 != 0) {
+            if (background[pos2 + 21] == map_shadow[2]) {
                 // if there is a shadow edge, use full shadow
-                background[pos0 + 41] = map_shadow[1];
+                background[pos2 + 21] = map_shadow[3];
+            } else if (background[pos2 + 21] == map_block[0]) {
+                // if there is shadow above use double shadow
+                background[pos2 + 21] = map_shadow[4];
             } else {
-                background[pos0 + 41] = map_shadow[0];
+                background[pos2 + 21] = map_shadow[5];
             }
-            background[pos1 + 41] = map_shadow[1];
-            // last block in row does not have this shadow
-            if ((2 + position) % 18 != 0) {
-                if (background[pos2 + 21] == map_shadow[2]) {
-                    // if there is a shadow edge, use full shadow
-                    background[pos2 + 21] = map_shadow[3];
-                } else if (background[pos2 + 21] == map_block[0]) {
-                    // if there is shadow above use double shadow
-                    background[pos2 + 21] = map_shadow[4];
-                } else {
-                    background[pos2 + 21] = map_shadow[5];
-                }
-                background[pos2 + 41] = map_shadow[2];
-            }
+            background[pos2 + 41] = map_shadow[2];
+        }
     }
     // update
     set_bkg_tiles(0, 0, 20, 18, background);
+}
+
+// returns on collision
+UINT8 collision_block(UINT8 position) {
+    // caution: difference must not get negative (UINT8)
+    // caution: 16*16 is an overflow (UINT8)
+    // ball is globally known
+    // 0,0 ball position is at 16, 18*8
+    // first block is at 8+8, 16+8 because of srceen offset
+    // ball radius is 8px (1<<3)
+
+    // +8 because there is on both sidse one block offset?
+    // y also needs +16 offscreen offset
+    UINT8 x = ((position % field_width) << 4) - 8;
+    UINT8 y = (18 << 3) - ((position / field_width) << 3) - 24;
+    UINT8 diffx = 0;
+    UINT8 diffy = 0;
+
+    // is center of ball insized block
+    if (x < ball.x && ball.x < (x + block_width) &&
+        (y < (ball.y) && (ball.y) < (y + block_height))) {
+        // plonger(0);
+        // hit!!
+        return 1;
+    } else { // check distance of corners to ball center
+        diffx = diff(ball.x, x);
+        diffy = diff(ball.y, y);
+        // with diffx=8 and diffy=8 we would have 8^2+8^2=128
+        // this check prevents overflows that would appear at 16^2+0^2
+        if (diffx <= 8 && diffy <= 8) {
+            // r^2 >= diffx^2 + diffy^2
+            if ((8 << 3) >= diffx * diffx + diffy * diffy) {
+                return 1;
+            }
+        }
+        diffy = diff(ball.y, y + block_height);
+        if (diffx <= 8 && diffy <= 8) {
+            // r^2 < diffx^2 + diffy^2
+            if ((8 << 3) >= diffx * diffx + diffy * diffy) {
+                return 1;
+            }
+        }
+        diffx = diff(ball.x, x + block_width);
+        if (diffx <= 8 && diffy <= 8) {
+            if ((8 << 3) >= diffx * diffx + diffy * diffy) {
+                return 1;
+            }
+        }
+        diffy = diff(ball.y, y);
+        if (diffx <= 8 && diffy <= 8) {
+            if ((8 << 3) >= diffx * diffx + diffy * diffy) {
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 
 // use middleparts at 16-24
@@ -308,8 +379,9 @@ void great_burst() {
     // load background tileset
     set_bkg_data(0, 59, great_burst_bg_data);
     // set level
-     memcpy(current_level, great_burst_level[0], 45);
-    //random_level(42);
+    // memcpy(current_level, great_burst_level[0], 45);
+    // random_level(42);
+    one_block_level(0x01);
     // fill level background
     draw_blocks();
     SHOW_BKG;
@@ -416,6 +488,27 @@ void great_burst() {
             }
             break;
         }
+        // check for block collisions
+        for (i = 0; i<(field_width * field_height)>> 1; ++i) {
+            if ((current_level[i] & 0xF0) != 0x00) {
+                if (collision_block((i << 1))) {
+                    plonger(0);
+                    current_level[i] &= 0x0F;
+                    changed = 1;
+                }
+            }
+            if ((current_level[i]) & 0x0F != 0x00) {
+                if (collision_block((i << 1) + 1)) {
+                    plonger(0);
+                    current_level[i] &= 0xF0;
+                    changed = 1;
+                }
+            }
+        }
+        if (changed == 1) {
+            draw_blocks();
+        }
+        changed = 0;
         for (i = 0; i < 3; ++i) {
             wait_vbl_done();
         }
