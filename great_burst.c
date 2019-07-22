@@ -24,7 +24,7 @@
 #define direction_max 24
 #define direction_1st_quarter (direction_max >> 2)
 #define direction_2nd_quarter (direction_max >> 1)
-#define direction_3rd_quarter (direction_max >> 2) * 3
+#define direction_3rd_quarter (direction_1st_quarter + direction_2nd_quarter)
 #define direction_4th_quarter direction_max
 
 // field is 9 blocks wide and blocks high 10
@@ -51,6 +51,19 @@ Paddle paddle = {0, 1, 6};
 UINT8 current_level[45];
 const UINT8 map_block[] = {0x05, 0x11, 0x1D, 0x27, 0x06, 0x13, 0x1F, 0x29};
 const UINT8 map_shadow[] = {0x31, 0x32, 0x34, 0x15, 0x08, 0x33};
+
+// macro functions
+
+// should receive good optimization if horizontal is a constant
+#define mirror_direction(direction, horizontal)                                \
+    (direction_max -                                                           \
+     (horizontal ? direction                                                   \
+                 : ((direction + (direction_max >> 1)) % direction_max)))
+#define move_set_sprite(nb, tile, x, y)                                        \
+    set_sprite_tile(nb, tile);                                                 \
+    move_sprite(nb, x, y);
+
+// real functtions
 
 UINT8 random_block(UINT8 ran) {
     if (ran < 20) {
@@ -130,16 +143,6 @@ void draw_blocks() {
     }
     // update
     set_bkg_tiles(0, 0, 20, 18, background);
-}
-
-UINT8 mirror_direction(UINT8 direction, UINT8 horizontal) {
-    // UINT8 ret = 0;
-    if (horizontal) {
-        return direction_max - direction;
-    } else {
-        return direction_max -
-               ((direction + (direction_max >> 1)) % direction_max);
-    }
 }
 
 // use middleparts at 16-24
@@ -223,26 +226,15 @@ void plonger(UINT8 note) {
     }
 }
 
-void fade_in(){
-    UINT8 i;
-    // fadein
-    for (i = 0; i < 4; i++) {
-        switch (i) {
-        case 0:
-            BGP_REG = 0xFF;
-            break;
-        case 1:
-            BGP_REG = 0xFE;
-            break;
-        case 2:
-            BGP_REG = 0xF9;
-            break;
-        case 3:
-            BGP_REG = 0xE4;
-            break;
-        }
-        delay(100);
-    };
+void fade_in() {
+    BGP_REG = 0xFF;
+    delay(100);
+    BGP_REG = 0xFE;
+    delay(100);
+    BGP_REG = 0xF9;
+    delay(100);
+    BGP_REG = 0xE4;
+    delay(100);
 }
 
 void great_burst() {
@@ -260,15 +252,11 @@ void great_burst() {
     set_sprite_data(0, 59, great_burst_fg_data);
 
     // draw ball
-    set_sprite_tile(ball_start, great_burst_fg_map[6 * 4]);
-    move_sprite(ball_start, 0, 0);
+    move_set_sprite(ball_start, great_burst_fg_map[6 * 4], 0, 0);
     set_sprite_prop(ball_start + 0, S_PALETTE);
-    set_sprite_tile(ball_start + 1, great_burst_fg_map[6 * 4 + 1]);
-    move_sprite(ball_start + 1, 8, 0);
-    set_sprite_tile(ball_start + 2, great_burst_fg_map[6 * 5]);
-    move_sprite(ball_start + 2, 0, 8);
-    set_sprite_tile(ball_start + 3, great_burst_fg_map[6 * 5] + 1);
-    move_sprite(ball_start + 3, 8, 8);
+    move_set_sprite(ball_start + 1, great_burst_fg_map[6 * 4 + 1], 8, 0);
+    move_set_sprite(ball_start + 2, great_burst_fg_map[6 * 5], 0, 8);
+    move_set_sprite(ball_start + 3, great_burst_fg_map[6 * 5] + 1, 8, 8);
     // place on 0,0
     for (i = ball_start; i < ball_end; ++i) {
         scroll_sprite(i, 16, 18 << 3);
@@ -304,8 +292,7 @@ void great_burst() {
     for (i = paddle_middle_start; i < paddle_middle_end; i += 2) {
         set_sprite_tile(i, great_burst_fg_map[6 * 2]);
         set_sprite_prop(i, S_PALETTE);
-        set_sprite_tile(i + 1, great_burst_fg_map[6 * 3]);
-        move_sprite(i + 1, 0, 8);
+        move_set_sprite(i + 1, great_burst_fg_map[6 * 3], 0, 8);
     }
     // move them to x start position
     for (i = paddle_middle_start; i < paddle_middle_end; ++i) {
