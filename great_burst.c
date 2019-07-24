@@ -59,6 +59,7 @@ Paddle paddle = {0, 1, 6};
 UINT8 current_level[((field_width * field_height) >> 1)];
 const UINT8 map_block[] = {0x05, 0x11, 0x1D, 0x27, 0x06, 0x13, 0x1F, 0x29};
 const UINT8 map_shadow[] = {0x31, 0x32, 0x34, 0x15, 0x08, 0x33};
+UINT8 i = 0;
 UINT16 time;
 
 // macro functions
@@ -95,7 +96,6 @@ UINT8 random_block(UINT8 ran) {
 }
 
 void random_level(UINT16 seed) {
-    UINT8 i;
     initrand(seed);
     for (i = 0; i < ((field_width * field_height) >> 1); i++) {
         current_level[i] = random_block(rand() % 100);
@@ -104,7 +104,6 @@ void random_level(UINT16 seed) {
 }
 
 void one_block_level(UINT8 block) {
-    UINT8 i;
     for (i = 0; i < ((field_width * field_height) >> 1); i++) {
         current_level[i] = block & 0x0F;
         current_level[i] |= (block & 0x0F) << 4;
@@ -114,7 +113,7 @@ void one_block_level(UINT8 block) {
 // directly modifies background variable
 // always draws current_level
 void draw_blocks() {
-    UINT8 i, position, block, pos0, pos1, pos2;
+    UINT8 position, block, pos0, pos1, pos2;
     // load empty level background
     memcpy(background, great_burst_bg_map_clear, 360);
     // place blocks
@@ -229,7 +228,6 @@ UINT8 collision_block(UINT8 position) {
 
 // use middleparts at 16-24
 void change_paddle_size(UINT8 size) {
-    UINT8 i;
     // respect minimum size
     if (size < 6) {
         size = 6;
@@ -269,7 +267,6 @@ void change_paddle_size(UINT8 size) {
 }
 
 void move_paddle(UINT8 by) {
-    UINT8 i;
     paddle.position += by;
     for (i = paddle_left_start; i < paddle_right_end + ((paddle.size - 6) << 1);
          ++i) {
@@ -321,7 +318,7 @@ void fade_in() {
 
 void great_burst() {
     UINT8 changed = 0;
-    UINT8 i, mask;
+    UINT8 mask;
 
     INT8 tmp_x = 0;
     INT8 tmp_y = 0;
