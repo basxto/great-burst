@@ -412,7 +412,7 @@ void great_burst() {
     // load background tileset
     set_bkg_data(0, 59, great_burst_bg_data);
     // set level
-    memcpy(current_level, great_burst_level[0], 45);
+    memcpy(current_level, great_burst_level[1], 45);
     // random_level(42);
     // one_block_level(0x01);
     // fill level background
@@ -553,7 +553,23 @@ void great_burst() {
             if ((current_level[i >> 1] & mask)) {
                 if (collision_block(i)) {
                     plonger(0);
-                    current_level[i >> 1] &= ~mask;
+                    switch (current_level[i >> 1] & mask) {
+                    case 0x40: // wall
+                    case 0x04:
+                        plonger(2);
+                        break;
+                    case 0x20: // degrade
+                    case 0x02:
+                    case 0x30:
+                    case 0x03:
+                        plonger(2);
+                        current_level[i >> 1] =
+                            (current_level[i >> 1] & ~mask) |
+                            (((current_level[i >> 1] & mask) - 1) & mask);
+                        break;
+                    default: // break
+                        current_level[i >> 1] &= ~mask;
+                    }
                     changed |= 1;
                 }
             }
@@ -565,7 +581,7 @@ void great_burst() {
             if (changed & 2)
                 ball.direction = mirror_direction(ball.direction, 1);
         }
-        for (i = 0; i < (15 - (sys_time - time)); ++i) {
+        for (i = 0; i < (25 - (sys_time - time)); ++i) {
             wait_vbl_done();
         }
     }
