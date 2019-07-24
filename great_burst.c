@@ -186,6 +186,15 @@ UINT8 lock_ball(){
     ball.locked = 1;
 }
 
+
+// only gets called for ball.y < 16 and ball.y can't be < 0
+UINT8 collision_paddle(UINT8 x){
+    if((x +8) >= paddle.position && x <= (paddle.position + (paddle.size << 3) ) ){
+        return 1;
+    }
+    return 0;
+}
+
 // returns on collision
 UINT8 collision_block(UINT8 position) {
     // caution: difference must not get negative (UINT8)
@@ -446,7 +455,12 @@ void great_burst() {
                 plonger(2);
             }
             // 17 double blocks high - ball height
-            if ((ball.direction > 6 &&
+            if (ball.y - tmp_y <= 16 && collision_paddle(ball.x + tmp_x)){
+                tmp_y = ball.y - 16;
+                //ball.direction = mirror_direction(ball.direction, 0);
+                changed |= 1;
+                plonger(1);
+            } else if ((ball.direction > 6 &&
                         ball.direction <= direction_3rd_quarter) &&
                        ball.y < tmp_y) {
                 //tmp_y = -ball.y;
@@ -461,7 +475,8 @@ void great_burst() {
                 // tmp_y = -(((17-2)<<3) - ball.y);
                 tmp_y = 0;
                 // change future ball direction
-                ball.direction = mirror_direction(ball.direction, 0);
+                //ball.direction = mirror_direction(ball.direction, 0);
+                changed |= 1;
                 plonger(2);
             }
             // actually move ball
