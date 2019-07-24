@@ -59,6 +59,7 @@ Paddle paddle = {0, 1, 6};
 UINT8 current_level[((field_width * field_height) >> 1)];
 const UINT8 map_block[] = {0x05, 0x11, 0x1D, 0x27, 0x06, 0x13, 0x1F, 0x29};
 const UINT8 map_shadow[] = {0x31, 0x32, 0x34, 0x15, 0x08, 0x33};
+UINT16 time;
 
 // macro functions
 #define diff(a, b) ((a) > (b) ? (a) - (b) : (b) - (a))
@@ -392,6 +393,8 @@ void great_burst() {
     fade_in();
     SHOW_SPRITES;
     while (1) {
+        changed = 0;
+        time = sys_time;
         if (!ball.locked) {
             // move ball
             tmp_x = 0;
@@ -419,7 +422,8 @@ void great_burst() {
             } else if ((ball.direction > direction_2nd_quarter) &&
                        ball.x < -tmp_x) {
                 tmp_x = ball.x;
-                ball.direction = mirror_direction(ball.direction, 1);
+                //ball.direction = mirror_direction(ball.direction, 1);
+                changed |= 2;
                 plonger(2);
             }
             // 17 double blocks high - ball height
@@ -434,7 +438,8 @@ void great_burst() {
                         ball.direction <= direction_3rd_quarter) &&
                        ball.y < tmp_y) {
                 tmp_y = -ball.y;
-                ball.direction = mirror_direction(ball.direction, 0);
+                //ball.direction = mirror_direction(ball.direction, 0);
+                changed |= 1;
                 plonger(2);
             }
             // actually move ball
@@ -450,10 +455,12 @@ void great_burst() {
             ball.speed = (ball.speed + 2) % 8;
         }
         if (joypad() == (J_A | J_LEFT)) {
-            ball.direction = mirror_direction(ball.direction, 1);
+            //ball.direction = mirror_direction(ball.direction, 1);
+            changed |= 2;
         }
         if (joypad() == (J_A | J_UP)) {
-            ball.direction = mirror_direction(ball.direction, 0);
+            //ball.direction = mirror_direction(ball.direction, 0);
+            changed |= 1;
         }
 
         // unlock ball
@@ -515,15 +522,18 @@ void great_burst() {
                 if (collision_block(i)) {
                     plonger(0);
                     current_level[i >> 1] &= ~mask;
-                    changed = 1;
+                    changed |= 1;
                 }
             }
         }
-        if (changed == 1) {
+        if (changed !=  0) {
             draw_blocks();
+            if(changed & 1)
+                ball.direction = mirror_direction(ball.direction, 0);
+            if(changed & 2)
+                ball.direction = mirror_direction(ball.direction, 1);
         }
-        changed = 0;
-        for (i = 0; i < 3; ++i) {
+        for (i = 0; i < (15 - (sys_time - time)); ++i) {
             wait_vbl_done();
         }
     }
