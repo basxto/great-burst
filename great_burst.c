@@ -171,25 +171,25 @@ void draw_blocks() {
 }
 
 // that offset of 21 makes no sense
-UINT8 lock_ball(){
+UINT8 lock_ball() {
     for (i = ball_start; i < ball_end; ++i) {
-        //scroll_sprite(i, (size - paddle.size) << 2, 0);
-        scroll_sprite(i, -ball.x, ball.y - 21 );
+        // scroll_sprite(i, (size - paddle.size) << 2, 0);
+        scroll_sprite(i, -ball.x, ball.y - 16);
     }
-    ball.y -= (ball.y - 21);
+    ball.y -= (ball.y - 16);
     // x is 0 now
     // 8/2 is <<2
-    ball.x = paddle.position + ((paddle.size-2) << 2) - 1;
+    ball.x = paddle.position + ((paddle.size - 2) << 2);
     for (i = ball_start; i < ball_end; ++i) {
         scroll_sprite(i, ball.x, 0);
     }
     ball.locked = 1;
 }
 
-
 // only gets called for ball.y < 16 and ball.y can't be < 0
-UINT8 collision_paddle(UINT8 x){
-    if((x +8) >= paddle.position && x <= (paddle.position + (paddle.size << 3) ) ){
+UINT8 collision_paddle(UINT8 x) {
+    if ((x + 8) >= paddle.position &&
+        x <= (paddle.position + (paddle.size << 3))) {
         return 1;
     }
     return 0;
@@ -450,23 +450,17 @@ void great_burst() {
             } else if ((ball.direction > direction_2nd_quarter) &&
                        ball.x < -tmp_x) {
                 tmp_x = ball.x;
-                //ball.direction = mirror_direction(ball.direction, 1);
                 changed |= 2;
                 plonger(2);
             }
             // 17 double blocks high - ball height
-            if (ball.y - tmp_y <= 16 && collision_paddle(ball.x + tmp_x)){
+            if (ball.y - tmp_y <= 16 && collision_paddle(ball.x + tmp_x)) {
                 tmp_y = ball.y - 16;
-                //ball.direction = mirror_direction(ball.direction, 0);
                 changed |= 1;
                 plonger(1);
             } else if ((ball.direction > 6 &&
                         ball.direction <= direction_3rd_quarter) &&
                        ball.y < tmp_y) {
-                //tmp_y = -ball.y;
-                //ball.direction = mirror_direction(ball.direction, 0);
-                //changed |= 1;
-                //plonger(2);
                 plonger(4);
                 changed |= 1;
                 lock_ball();
@@ -475,28 +469,29 @@ void great_burst() {
                 // tmp_y = -(((17-2)<<3) - ball.y);
                 tmp_y = 0;
                 // change future ball direction
-                //ball.direction = mirror_direction(ball.direction, 0);
                 changed |= 1;
                 plonger(2);
             }
-            // actually move ball
-            for (i = 0; i < 4; ++i) {
-                scroll_sprite(i, tmp_x, tmp_y);
+            if (!ball.locked) {
+                // actually move ball
+                for (i = 0; i < 4; ++i) {
+                    scroll_sprite(i, tmp_x, tmp_y);
+                }
+                // move theoretic ball
+                ball.x += tmp_x;
+                ball.y -= tmp_y;
             }
-            // move theoretic ball
-            ball.x += tmp_x;
-            ball.y -= tmp_y;
         }
         // cheat & debug codes
         if (joypad() == (J_A | J_DOWN)) {
             ball.speed = (ball.speed + 2) % 8;
         }
         if (joypad() == (J_A | J_LEFT)) {
-            //ball.direction = mirror_direction(ball.direction, 1);
+            // ball.direction = mirror_direction(ball.direction, 1);
             changed |= 2;
         }
         if (joypad() == (J_A | J_UP)) {
-            //ball.direction = mirror_direction(ball.direction, 0);
+            // ball.direction = mirror_direction(ball.direction, 0);
             changed |= 1;
         }
 
@@ -563,11 +558,11 @@ void great_burst() {
                 }
             }
         }
-        if (changed !=  0) {
+        if (changed != 0) {
             draw_blocks();
-            if(changed & 1)
+            if (changed & 1)
                 ball.direction = mirror_direction(ball.direction, 0);
-            if(changed & 2)
+            if (changed & 2)
                 ball.direction = mirror_direction(ball.direction, 1);
         }
         for (i = 0; i < (15 - (sys_time - time)); ++i) {
