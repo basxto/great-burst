@@ -170,6 +170,22 @@ void draw_blocks() {
     set_bkg_tiles(0, 0, 20, 18, background);
 }
 
+// that offset of 21 makes no sense
+UINT8 lock_ball(){
+    for (i = ball_start; i < ball_end; ++i) {
+        //scroll_sprite(i, (size - paddle.size) << 2, 0);
+        scroll_sprite(i, -ball.x, ball.y - 21 );
+    }
+    ball.y -= (ball.y - 21);
+    // x is 0 now
+    // 8/2 is <<2
+    ball.x = paddle.position + ((paddle.size-2) << 2) - 1;
+    for (i = ball_start; i < ball_end; ++i) {
+        scroll_sprite(i, ball.x, 0);
+    }
+    ball.locked = 1;
+}
+
 // returns on collision
 UINT8 collision_block(UINT8 position) {
     // caution: difference must not get negative (UINT8)
@@ -298,6 +314,12 @@ void plonger(UINT8 note) {
         NR10_REG = 0x14; // arpeggio | 4
         NR13_REG = 0x70; // lsb
         NR14_REG = 0xC4; // msb
+        break;
+    case 4:              // die
+        NR10_REG = 0x15; // arpeggio | 5
+        NR13_REG = 0x7F; // lsb
+        NR14_REG = 0xC4; // msb
+        break;
     case 2:
     default:             // wall
         NR13_REG = 0x00; // lsb
@@ -424,19 +446,22 @@ void great_burst() {
                 plonger(2);
             }
             // 17 double blocks high - ball height
-            if (ball.y - tmp_y > ((17 - 2) << 3)) {
+            if ((ball.direction > 6 &&
+                        ball.direction <= direction_3rd_quarter) &&
+                       ball.y < tmp_y) {
+                //tmp_y = -ball.y;
+                //ball.direction = mirror_direction(ball.direction, 0);
+                //changed |= 1;
+                //plonger(2);
+                plonger(4);
+                changed |= 1;
+                lock_ball();
+            } else if (ball.y - tmp_y > ((17 - 2) << 3)) {
                 // mirror ball path partly
                 // tmp_y = -(((17-2)<<3) - ball.y);
                 tmp_y = 0;
                 // change future ball direction
                 ball.direction = mirror_direction(ball.direction, 0);
-                plonger(2);
-            } else if ((ball.direction > 6 &&
-                        ball.direction <= direction_3rd_quarter) &&
-                       ball.y < tmp_y) {
-                tmp_y = -ball.y;
-                //ball.direction = mirror_direction(ball.direction, 0);
-                changed |= 1;
                 plonger(2);
             }
             // actually move ball
