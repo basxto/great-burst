@@ -71,13 +71,6 @@ const UINT8 map_shadow[] = {0x31, 0x32, 0x34, 0x15, 0x08, 0x33};
     set_sprite_tile(nb, tile);                                                 \
     move_sprite(nb, x, y);
 
-// get and set half-byte blocks
-// behavior depending on last bit
-// inverted last bit i^0xFE
-#define get_block(i) (current_level[i>>1] & (i&0x01 ? 0x0F : 0xF0))
-#define get_other_block(i) (current_level[i>>1] & (i&0x01 ? 0xF0 : 0x0F))
-#define set_block(i, value) current_level[i>>1] = get_other_block(i) | ((value&0x0F) << (((i^0xFE)) << 2))
-
 // real functtions
 
 UINT8 random_block(UINT8 ran) {
@@ -327,7 +320,7 @@ void fade_in() {
 
 void great_burst() {
     UINT8 changed = 0;
-    UINT8 i;
+    UINT8 i, mask;
 
     INT8 tmp_x = 0;
     INT8 tmp_y = 0;
@@ -509,13 +502,14 @@ void great_burst() {
         for (i = 0; i<(field_width * field_height); ++i) {
             //quick check
             if((current_level[i>>1]) != 0x00){
+                mask = (i&0x01 ? 0x0F : 0xF0);
                 // only check blocks which surround the ball
                 if((i % field_width) >= tmp_x && (tmp_x + 1) >= (i % field_width) &&
                 (i / field_width) >= tmp_y && (tmp_y + 3) >= (i / field_width)){
-                    if(get_block(i) != 0x00){
+                    if((current_level[i>>1] & mask)){
                         if (collision_block(i+(i&0x01))) {
                             plonger(0);
-                            set_block(i, 0x00);
+                            current_level[i>>1] &= ~mask;
                             changed = 1;
                         }
                     }
