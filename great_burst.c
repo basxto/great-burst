@@ -496,23 +496,26 @@ void great_burst() {
             }
             break;
         }
-        tmp_x = (ball.x / block_width );
-        tmp_y = (((18 << 3) - ball.y - 24) / block_height );
+        tmp_x = (ball.x / block_width);
+        tmp_y = (((18 << 3) - ball.y - 24) / block_height);
         // check for block collisions
-        for (i = 0; i<(field_width * field_height); ++i) {
-            //quick check
-            if((current_level[i>>1]) != 0x00){
-                mask = (i&0x01 ? 0x0F : 0xF0);
-                // only check blocks which surround the ball
-                if((i % field_width) >= tmp_x && (tmp_x + 1) >= (i % field_width) &&
-                (i / field_width) >= tmp_y && (tmp_y + 3) >= (i / field_width)){
-                    if((current_level[i>>1] & mask)){
-                        if (collision_block(i)) {
-                            plonger(0);
-                            current_level[i>>1] &= ~mask;
-                            changed = 1;
-                        }
-                    }
+        for (i = 0; i < (field_width * field_height); ++i) {
+            // sort out empty double blocks
+            if ((current_level[i >> 1]) == 0x00)
+                continue;
+            // only check blocks which surround the ball
+            if (((i % field_width) < tmp_x) ||
+                ((tmp_x + 1) < (i % field_width)) ||
+                ((i / field_width) < tmp_y) ||
+                ((tmp_y + 3) < (i / field_width)))
+                continue;
+
+            mask = (i & 0x01 ? 0x0F : 0xF0);
+            if ((current_level[i >> 1] & mask)) {
+                if (collision_block(i)) {
+                    plonger(0);
+                    current_level[i >> 1] &= ~mask;
+                    changed = 1;
                 }
             }
         }
