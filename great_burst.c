@@ -179,7 +179,7 @@ UINT8 collision_block(UINT8 position) {
     // first block is at 8+8, 16+8 because of srceen offset
     // ball radius is 8px (1<<3)
 
-    // +8 because there is on both sidse one block offset?
+    // +8 since we need the center of the ball
     // y also needs +16 offscreen offset
     UINT8 x = ((position % field_width) << 4) - 8;
     UINT8 y = (18 << 3) - ((position / field_width) << 3) - 24;
@@ -507,7 +507,7 @@ void great_burst() {
                 if((i % field_width) >= tmp_x && (tmp_x + 1) >= (i % field_width) &&
                 (i / field_width) >= tmp_y && (tmp_y + 3) >= (i / field_width)){
                     if((current_level[i>>1] & mask)){
-                        if (collision_block(i+(i&0x01))) {
+                        if (collision_block(i)) {
                             plonger(0);
                             current_level[i>>1] &= ~mask;
                             changed = 1;
