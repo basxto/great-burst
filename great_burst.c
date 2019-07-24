@@ -312,27 +312,27 @@ void plonger(UINT8 note) {
     NR12_REG = 0xF7; // volume envelope
     switch (note) {
     case 0:              // break
-        NR13_REG = 0x7F; // lsb
-        NR14_REG = 0xC2; // msb
+        NR14_REG = 0xC0 | ((notes[0][note_fis] >> 8) & 0x07); // msb
+        NR13_REG = notes[0][note_fis] & 0xFF;
         break;
     case 1:              // paddle
-        NR13_REG = 0x00; // lsb
-        NR14_REG = 0xC3; // msb
+        NR14_REG = 0xC0 | ((notes[0][note_gis] >> 8) & 0x07); // msb
+        NR13_REG = notes[0][note_gis] & 0xFF;
         break;
     case 3:              // shoot
         NR10_REG = 0x14; // arpeggio | 4
-        NR13_REG = 0x70; // lsb
-        NR14_REG = 0xC4; // msb
+        NR14_REG = 0xC0 | ((notes[0][note_h] >> 8) & 0x07); // msb
+        NR13_REG = notes[0][note_h]  & 0xFF;
         break;
     case 4:              // die
         NR10_REG = 0x15; // arpeggio | 5
-        NR13_REG = 0x7F; // lsb
-        NR14_REG = 0xC4; // msb
+        NR14_REG = 0xC0 | ((notes[1][note_d] >> 8) & 0x07); // msb
+        NR13_REG = notes[4][note_d] & 0xFF;
         break;
     case 2:
     default:             // wall
-        NR13_REG = 0x00; // lsb
-        NR14_REG = 0xC4; // msb
+        NR14_REG = 0xC0 | ((notes[0][note_h] >> 8) & 0x07); // msb
+        NR13_REG = notes[0][note_h] & 0xFF;
     }
 }
 
