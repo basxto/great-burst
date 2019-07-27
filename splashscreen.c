@@ -1,21 +1,4 @@
-#include <gb/gb.h>
-#include <stdio.h>
-#include <string.h>
-
-#include "background.c"
-#include "sound.c"
-
-#include "pix/oga_splash_data.c"
-#include "pix/oga_splash_map.c"
-// only O and G
-#include "pix/oga_splash_map_og.c"
-// movable parts of the logo
-#include "pix/oga_splash_movable_data.c"
-#include "pix/oga_splash_movable_map.c"
-
-// offset in 8x8 tiles
-#define splashscreen_a_xoffset 4
-#define splashscreen_line_width 10
+#include "splashscreen.h"
 
 // make a bling sound with three notes
 void bling() {
@@ -211,7 +194,7 @@ void splash() {
     // modify main palette
     // dark grey and white get switched
     // also light grey becomes dark grey
-    OBP0_REG = 0xCA; // 11001010 
+    OBP0_REG = 0xCA; // 11001010
     SHOW_SPRITES;
     bling();
     delay(100);
@@ -222,7 +205,7 @@ void splash() {
         set_sprite_prop(i, 0x00);
     }
     // reset main palette
-    OBP0_REG = 0xE4;//11100100
+    OBP0_REG = 0xE4; // 11100100
     delay(1000);
     // fadeout
     for (i = 0; i < 4; i++) {

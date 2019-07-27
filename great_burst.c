@@ -1,57 +1,4 @@
-#include <gb/gb.h>
-#include <rand.h>
-#include <stdio.h>
-#include <string.h>
-
-#include "great_burst_level.c"
-
-#include "pix/great_burst_bg_data.c"
-#include "pix/great_burst_bg_map.c"
-#include "pix/great_burst_bg_map_clear.c"
-
-#include "pix/great_burst_fg_data.c"
-#include "pix/great_burst_fg_map.c"
-
-// defines for sprite management
-#define ball_start 0
-#define ball_end 4
-#define paddle_left_start 4
-#define paddle_left_end 10
-#define paddle_right_start 10
-#define paddle_right_end 16
-#define paddle_middle_start 16
-#define paddle_middle_end 24
-// TODO: 32 directions are probably easier to calculate
-#define direction_max 24
-#define direction_1st_quarter (direction_max >> 2)
-#define direction_2nd_quarter (direction_max >> 1)
-#define direction_3rd_quarter (direction_1st_quarter + direction_2nd_quarter)
-#define direction_4th_quarter direction_max
-
-#define block_width 16
-#define block_height 8
-// TODO: field width 8 would be faster to calculate with bit shifting
-// don't change this only works with 8
-#define field_width 8
-#define field_height 10
-
-// field is 9 blocks wide and blocks high 10
-// one UINT8 is 2 blocks => 2 rows = 9byte
-
-typedef struct {
-    UINT8 x;      // : 8;
-    UINT8 y;      // : 8;
-    UINT8 speed;  // : 2; // 0-2; 2 bit
-    UINT8 locked; // : 1;    // 1 bit
-    // 0 is up; 3 is 45 degree to the right; 6 is right; 12 is down...
-    UINT8 direction; // : 5; // 0-23; 5bit
-} Ball;
-
-typedef struct {
-    UINT8 position;
-    UINT8 speed;
-    UINT8 size;
-} Paddle;
+#include "great_burst.h"
 
 Ball ball = {0, 0, 1, 1, 1};
 Paddle paddle = {0, 1, 6};
@@ -61,19 +8,6 @@ const UINT8 map_block[] = {0x04, 0x0D, 0x13, 0x17, 0x06, 0x0F, 0x15, 0x19};
 const UINT8 map_shadow[] = {0x24, 0x25, 0x28, 0x11, 0x08, 0x27};
 UINT8 i = 0;
 UINT16 time;
-
-// macro functions
-#define diff(a, b) ((a) > (b) ? (a) - (b) : (b) - (a))
-// should receive good optimization if horizontal is a constant
-#define mirror_direction(direction, horizontal)                                \
-    (direction_max -                                                           \
-     (horizontal ? direction                                                   \
-                 : ((direction + (direction_max >> 1)) % direction_max)))
-#define move_set_sprite(nb, tile, x, y)                                        \
-    set_sprite_tile(nb, tile);                                                 \
-    move_sprite(nb, x, y);
-
-// real functtions
 
 UINT8 random_block(UINT8 ran) {
     if (ran < 20) {
@@ -311,26 +245,26 @@ void plonger(UINT8 note) {
     NR11_REG = 0x50; // 50% duty
     NR12_REG = 0xF7; // volume envelope
     switch (note) {
-    case 0:              // break
+    case 0:                                                   // break
         NR14_REG = 0xC0 | ((notes[0][note_fis] >> 8) & 0x07); // msb
         NR13_REG = notes[0][note_fis] & 0xFF;
         break;
-    case 1:              // paddle
+    case 1:                                                   // paddle
         NR14_REG = 0xC0 | ((notes[0][note_gis] >> 8) & 0x07); // msb
         NR13_REG = notes[0][note_gis] & 0xFF;
         break;
-    case 3:              // shoot
-        NR10_REG = 0x14; // arpeggio | 4
+    case 3:                                                 // shoot
+        NR10_REG = 0x14;                                    // arpeggio | 4
         NR14_REG = 0xC0 | ((notes[0][note_h] >> 8) & 0x07); // msb
-        NR13_REG = notes[0][note_h]  & 0xFF;
+        NR13_REG = notes[0][note_h] & 0xFF;
         break;
-    case 4:              // die
-        NR10_REG = 0x15; // arpeggio | 5
+    case 4:                                                 // die
+        NR10_REG = 0x15;                                    // arpeggio | 5
         NR14_REG = 0xC0 | ((notes[1][note_d] >> 8) & 0x07); // msb
         NR13_REG = notes[4][note_d] & 0xFF;
         break;
     case 2:
-    default:             // wall
+    default:                                                // wall
         NR14_REG = 0xC0 | ((notes[0][note_h] >> 8) & 0x07); // msb
         NR13_REG = notes[0][note_h] & 0xFF;
     }

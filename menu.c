@@ -1,13 +1,6 @@
-#include "pix/great_burst_win_data.c"
-#include "pix/great_burst_win_map_clear.c"
-#include "text_en.c"
+#include "menu.h"
 
 UINT8 buffer[16];
-
-#define font_start 0x2E
-#define font_space 0x04
-#define font_offset 0x10
-#define font_to_uppercase (font_offset + 0x20)
 
 void write_line(UINT8 x, UINT8 y, UINT8 length, char *str) {
     UINT8 i;
@@ -56,11 +49,14 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
         // those characters are very special
         if (str[i] == '\a') {
             // alternative character mode
-            if((i + 1) < length){
+            if ((i + 1) < length) {
                 ++i;
                 // map rows all to first font row
-                tmp_buffer = font_start + ((str[i] & 0x0F) + 0x10 - font_offset);
-                if (str[i] == '"' || str[i] == 'u' || str[i] == '\'' || str[i] == 'I' || str[i] == ';' || str[i] == '\\' || str[i] == '-' || str[i] == '^') {
+                tmp_buffer =
+                    font_start + ((str[i] & 0x0F) + 0x10 - font_offset);
+                if (str[i] == '"' || str[i] == 'u' || str[i] == '\'' ||
+                    str[i] == 'I' || str[i] == ';' || str[i] == '\\' ||
+                    str[i] == '-' || str[i] == '^') {
                     // write above next character
                     set_win_tiles(x + j, y + row - 1, 1, 1, &tmp_buffer);
                 } else {
@@ -111,7 +107,7 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
         set_win_tiles(x, y + row, width, 1, buffer);
         ++row;
     }
-    if(row < height){
+    if (row < height) {
         // clear buffer
         for (i = 0; i < 16; ++i) {
             buffer[i] = font_space;
@@ -162,8 +158,6 @@ void credits() {
 }
 
 void menu(UINT8 mode) {
-
-    //set_win_data(0, 150, great_burst_win_data);
     set_bkg_data(0, 163, great_burst_bg_data);
     draw_menu(mode);
     SHOW_BKG;
