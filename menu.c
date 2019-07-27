@@ -98,6 +98,16 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
     // ended with a \0 and we just printed at \n
     if (j != 0) {
         set_win_tiles(x, y + row, width, 1, buffer);
+        ++row;
+    }
+    if(row < height){
+        // clear buffer
+        for (i = 0; i < 16; ++i) {
+            buffer[i] = 0x02;
+        }
+        for (; row < height; row++) {
+            set_win_tiles(x, y + row, width, 1, buffer);
+        }
     }
 }
 
@@ -128,8 +138,8 @@ void help() {
 }
 
 void credits() {
-    write_text(4, 0, 15, 2, 0, text_credits_title, sizeof(text_credits_title));
-    write_text(4, 2, 15, 16, 0, text_credits, sizeof(text_credits));
+    write_text(4, 0, 16, 2, 0, text_credits_title, sizeof(text_credits_title));
+    write_text(4, 2, 15, 16, 22, text_credits, sizeof(text_credits));
     for (i = 0; i < 16; ++i) {
         buffer[i] = 0x5C;
     }
