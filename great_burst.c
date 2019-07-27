@@ -57,8 +57,8 @@ Ball ball = {0, 0, 1, 1, 1};
 Paddle paddle = {0, 1, 6};
 
 UINT8 current_level[((field_width * field_height) >> 1)];
-const UINT8 map_block[] = {0x05, 0x11, 0x1D, 0x27, 0x06, 0x13, 0x1F, 0x29};
-const UINT8 map_shadow[] = {0x31, 0x32, 0x34, 0x15, 0x08, 0x33};
+const UINT8 map_block[] = {0x04, 0x0D, 0x13, 0x17, 0x06, 0x0F, 0x15, 0x19};
+const UINT8 map_shadow[] = {0x24, 0x25, 0x28, 0x11, 0x08, 0x27};
 UINT8 i = 0;
 UINT16 time;
 
@@ -410,7 +410,7 @@ void great_burst() {
     }
 
     // load background tileset
-    set_bkg_data(0, 59, great_burst_bg_data);
+    set_bkg_data(0, 163, great_burst_bg_data);
     // set level
     memcpy(current_level, great_burst_level[1], 45);
     // random_level(42);

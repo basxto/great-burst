@@ -4,12 +4,15 @@
 
 UINT8 buffer[16];
 
-#define font_start 0x1D
+#define font_start 0x2E
+#define font_space 0x04
+#define font_offset 0x10
+#define font_to_uppercase (font_offset + 0x20)
 
 void write_line(UINT8 x, UINT8 y, UINT8 length, char *str) {
     UINT8 i;
     for (i = 0; i < 16; i++) {
-        buffer[i] = 0x02;
+        buffer[i] = font_space;
     }
     for (i = 0; i < length; i++) {
         // strings end with a nullbyte
@@ -17,14 +20,14 @@ void write_line(UINT8 x, UINT8 y, UINT8 length, char *str) {
             break;
         }
         if (str[i] > 0x20 && str[i] < 0x60) {
-            buffer[i] = 0x1D + (str[i] - 0x21);
+            buffer[i] = font_start + (str[i] - font_offset);
         } else if (str[i] > 0x60 && str[i] < 0x7B) {
             // we don't have lower case in our font
             // shift to upper case
-            buffer[i] = 0x1D + (str[i] - 0x41);
+            buffer[i] = font_start + (str[i] - font_to_uppercase);
         } else {
             // everything else, including space, becomes a space
-            buffer[i] = 0x02;
+            buffer[i] = font_space;
         }
     }
     set_win_tiles(x, y, length, 1, buffer);
@@ -42,7 +45,7 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
         // clear buffer
         if (j == 0) {
             for (j = 0; j < 16; ++j) {
-                buffer[j] = 0x02;
+                buffer[j] = font_space;
             }
             j = 0;
         }
@@ -55,7 +58,7 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
             // alternative character mode
             if ((i + 1) < length && str[i + 1] == '^') {
                 ++i;
-                tmp_buffer = font_start + (str[i] - 0x21);
+                tmp_buffer = font_start + (str[i] - font_offset);
                 set_win_tiles(x + j, y + row - 1, 1, 1, &tmp_buffer);
             }
             continue;
@@ -69,26 +72,26 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
         if (str[i] == '.' && (i + 1) < length && str[i + 1] == '0') {
             // there is a special .0 character
             ++i;
-            tmp_buffer = font_start + ('0' - 0x21);
+            tmp_buffer = font_start + ('0' - font_offset);
         } else if (str[i] > 0x20 && str[i] < 0x60) {
             // print regular characters
-            tmp_buffer = font_start + (str[i] - 0x21);
+            tmp_buffer = font_start + (str[i] - font_offset);
         } else if (str[i] > 0x60 && str[i] < 0x7B) {
             // we don't have lower case in our font
             // shift to upper case
-            tmp_buffer = font_start + (str[i] - 0x41);
+            tmp_buffer = font_start + (str[i] - font_to_uppercase);
         } else {
-            buffer[i] = 0x02;
+            buffer[i] = font_space;
             switch (str[i]) {
             case '\t':
                 if (j < 16)
-                    buffer[j++] = 0x02;
+                    buffer[j++] = font_space;
                 if (j < 16)
-                    buffer[j++] = 0x02;
+                    buffer[j++] = font_space;
                 if (j < 16)
-                    buffer[j++] = 0x02;
+                    buffer[j++] = font_space;
             default: // space
-                tmp_buffer = 0x02;
+                tmp_buffer = font_space;
             }
         }
         // avoid overflow
@@ -103,7 +106,7 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
     if(row < height){
         // clear buffer
         for (i = 0; i < 16; ++i) {
-            buffer[i] = 0x02;
+            buffer[i] = font_space;
         }
         for (; row < height; row++) {
             set_win_tiles(x, y + row, width, 1, buffer);
@@ -120,7 +123,7 @@ void draw_menu(UINT8 mode) {
     } else { // pause menu*/
         write_text(7, 4, 12, 14, 0, text_pause_menu, sizeof(text_pause_menu));
     }
-    buffer[0] = 0x1A;
+    buffer[0] = 0x20;
     set_win_tiles(5, 4, 1, 1, buffer);
 }
 
@@ -128,10 +131,10 @@ void help() {
     write_text(4, 0, 15, 2, 0, text_help_title, sizeof(text_help_title));
     write_text(4, 2, 15, 16, 0, text_help, sizeof(text_help));
     for (i = 0; i < 16; ++i) {
-        buffer[i] = 0x5C;
+        buffer[i] = 0x21;
     }
     set_win_tiles(19, 2, 1, 16, buffer);
-    buffer[0] = 0x5D;
+    buffer[0] = 0x29;
     set_win_tiles(19, 3, 1, 1, buffer);
     while (1)
         ;
@@ -139,12 +142,12 @@ void help() {
 
 void credits() {
     write_text(4, 0, 16, 2, 0, text_credits_title, sizeof(text_credits_title));
-    write_text(4, 2, 15, 16, 22, text_credits, sizeof(text_credits));
+    write_text(4, 2, 15, 16, 16, text_credits, sizeof(text_credits));
     for (i = 0; i < 16; ++i) {
-        buffer[i] = 0x5C;
+        buffer[i] = 0x21;
     }
     set_win_tiles(19, 2, 1, 16, buffer);
-    buffer[0] = 0x5D;
+    buffer[0] = 0x29;
     set_win_tiles(19, 3, 1, 1, buffer);
     while (1)
         ;
@@ -152,7 +155,8 @@ void credits() {
 
 void menu(UINT8 mode) {
 
-    set_win_data(0, 150, great_burst_win_data);
+    //set_win_data(0, 150, great_burst_win_data);
+    set_bkg_data(0, 163, great_burst_bg_data);
     draw_menu(mode);
     SHOW_BKG;
     SHOW_WIN;
