@@ -17,7 +17,8 @@ Paddle paddle = {0, 1, 6};
 UINT8 current_level[((field_width * field_height) >> 1)];
 const UINT8 map_block[] = {0x04, 0x0D, 0x13, 0x17, 0x06, 0x0F, 0x15, 0x19};
 const UINT8 map_shadow[] = {0x24, 0x25, 0x28, 0x11, 0x08, 0x27};
-UINT8 i = 0;
+UINT8 i, balls, blocks = 0;
+UINT16 points = 0;
 UINT16 time;
 
 UINT8 random_block(UINT8 ran) {
@@ -315,12 +316,36 @@ void load_level(UINT8 random, UINT16 level) {
     draw_blocks();
 }
 
+void draw_stats() {
+    char buffer[] = "000";
+    buffer[0] = '0' + (points / 100);
+    buffer[1] = '0' + ((points % 100) / 10);
+    buffer[2] = '0' + (points % 10);
+    write_line(0, 0, 3, buffer);
+    // write_line(2, 4, 1, "0" + balls);
+    buffer[0] = '0' + balls;
+    write_line(2, 4, 1, buffer);
+}
+
 void great_burst() {
     UINT8 changed = 0;
+    UINT8 playing = 1;
     UINT8 mask;
 
     INT8 tmp_x = 0;
     INT8 tmp_y = 0;
+    points = 0;
+    balls = 5;
+    draw_stats();
+    // reset ball and paddle
+    ball.x = 0;
+    ball.y = 0;
+    ball.direction = 1;
+    ball.locked = 1;
+    ball.speed = 1;
+    paddle.position = 0;
+    paddle.speed = 1;
+    paddle.size = 6;
 
     // draw ball
     move_set_sprite(ball_start, great_burst_fg_map[6 * 4], 0, 0);
@@ -371,7 +396,7 @@ void great_burst() {
     }
 
     SHOW_SPRITES;
-    while (1) {
+    while (playing) {
         changed = 0;
         time = sys_time;
         if (!ball.locked) {
@@ -415,6 +440,11 @@ void great_burst() {
                 plonger(4);
                 changed |= 1;
                 lock_ball();
+                --balls;
+                if (balls == -1) {
+                    balls = 0;
+                    playing = 0;
+                }
             } else if (ball.y - tmp_y > ((17 - 2) << 3)) {
                 // mirror ball path partly
                 // tmp_y = -(((17-2)<<3) - ball.y);
@@ -517,9 +547,11 @@ void great_burst() {
                         current_level[i >> 1] =
                             (current_level[i >> 1] & ~mask) |
                             (((current_level[i >> 1] & mask) - 1) & mask);
+                        points += 1;
                         break;
                     default: // break
                         current_level[i >> 1] &= ~mask;
+                        points += 2;
                     }
                     changed |= 1;
                 }
@@ -532,6 +564,7 @@ void great_burst() {
             if (changed & 2)
                 ball.direction = mirror_direction(ball.direction, 1);
         }
+        draw_stats();
         if (joypad() == J_START) {
             HIDE_SPRITES;
             menu(1);
@@ -546,5 +579,13 @@ void great_burst() {
                 wait_vbl_done();
             }
         }
+    }
+    points = 0;
+    draw_stats();
+    HIDE_SPRITES;
+    // clean up sprites
+    for (i = 0; i < paddle_middle_end; ++i) {
+        move_sprite(i, 0, 0);
+        set_sprite_prop(i, 0x00);
     }
 }

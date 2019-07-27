@@ -121,9 +121,11 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
 }
 
 void draw_menu(UINT8 mode) {
-    set_win_tiles(0, 0, 20, 18, great_burst_win_map_clear);
-    write_line(0, 0, 3, "133");
-    write_line(2, 4, 1, "7");
+    if (mode == 0) {
+        set_win_tiles(0, 0, 20, 18, great_burst_win_map_clear);
+        write_line(0, 0, 3, "000");
+        write_line(2, 4, 1, "0");
+    }
     if (mode == 0) { // main menu
         write_text(7, 4, 12, 14, 0, text_main_menu, sizeof(text_main_menu));
     } else { // pause menu*/
@@ -161,6 +163,28 @@ void credits() {
         ;
 }
 
+void slide_in() {
+    UINT8 i;
+    move_win(7 + (20 << 3) - (3 << 3), 0);
+    // slide in
+    for (i = 0; i < (20 << 3) - (3 << 3) - 3; i += 3) {
+        scroll_win(-3, 0);
+        wait_vbl_done();
+    }
+    move_win(7, 0);
+}
+
+void slide_out() {
+    UINT8 i;
+    move_win(7, 0);
+    // slide in
+    for (i = 0; i < (20 << 3) - (3 << 3) - 3; i += 3) {
+        scroll_win(+3, 0);
+        wait_vbl_done();
+    }
+    move_win(7 + (20 << 3) - (3 << 3), 0);
+}
+
 void menu(UINT8 mode) {
     UINT8 i;
     great_burst_init();
@@ -170,36 +194,26 @@ void menu(UINT8 mode) {
         SHOW_BKG;
         fade_in();
     } else {
-        move_win(7 + (20 << 3) - (3 << 3), 0);
-        // slide in
-        for (i = 0; i < (20 << 3) - (3 << 3) - 3; i += 3) {
-            scroll_win(-3, 0);
-            wait_vbl_done();
-        }
-        move_win(7, 0);
+        slide_in();
     }
     for (i = 0; i < 5; ++i) {
         wait_vbl_done();
     }
-    while (joypad() != J_START) {
+    while (mode == 0 || joypad() != J_START) {
         // help();
         // credits();
+        if (mode == 0 && joypad() == J_START) {
+            great_burst_init();
+            load_level(0, 0);
+            slide_out();
+            great_burst();
+            draw_menu(mode);
+            slide_in();
+        }
+
         for (i = 0; i < 8; ++i) {
             wait_vbl_done();
         }
     };
-    if (mode == 0) {
-        great_burst_init();
-        load_level(0, 0);
-    }
-    move_win(7, 0);
-    // slide in
-    for (i = 0; i < (20 << 3) - (3 << 3) - 3; i += 3) {
-        scroll_win(+3, 0);
-        wait_vbl_done();
-    }
-    move_win(7 + (20 << 3) - (3 << 3), 0);
-    if (mode == 0) {
-        great_burst();
-    }
+    slide_out();
 }

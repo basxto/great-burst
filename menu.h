@@ -20,6 +20,8 @@ void draw_menu(UINT8 mode);
 void help(void);
 
 void credits(void);
+void slide_in(void);
+void slide_out(void);
 
 void menu(UINT8 mode);
 

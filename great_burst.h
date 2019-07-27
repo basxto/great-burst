@@ -102,6 +102,9 @@ void load_level(UINT8 random, UINT16 level);
 // initialize device for game
 void great_burst_init(void);
 
+// points and left balls
+void draw_stats(void);
+
 // main function of the game
 void great_burst(void);
 
