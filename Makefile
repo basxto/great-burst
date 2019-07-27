@@ -2,7 +2,7 @@ CC=lcc
 emulator=retroarch -L /usr/lib/libretro/gambatte_libretro.so
 pngconvert=./dev/GameBoyPngConverter/linux-x64/GameBoyPngConverter
 
-build: pix/oga_splash_data.c pix/oga_splash_movable_data.c pix/great_burst_bg_data.c pix/great_burst_fg_data.c
+build: pix/oga_splash_data.c pix/oga_splash_movable_data.c pix/great_burst_bg_data.c pix/great_burst_fg_data.c pix/great_burst_win_data.c
 	$(CC) -Wa-l -Wl-m -Wl-j -c -o main.o main.c
 	$(CC) -Wa-l -Wl-m -Wl-j -o main.gb main.o
 
