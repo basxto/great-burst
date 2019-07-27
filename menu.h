@@ -23,6 +23,6 @@ void credits(void);
 void slide_in(void);
 void slide_out(void);
 
-void menu(UINT8 mode);
+UINT8 menu(UINT8 mode);
 
 #endif

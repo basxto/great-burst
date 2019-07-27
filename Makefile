@@ -20,3 +20,6 @@ clean:
 	rm *.gb *.o *.map *.lst *.sym pix/*_map.c pix/*_data.c
 
 test: build run
+
+base64:
+	base64 main.gb | xclip -selection clipboard

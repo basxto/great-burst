@@ -26,12 +26,12 @@ const char text_help[] = "Reflect the\n\n"
 
 const char text_main_menu[] = "Play\n\n"
                               "Random\n\n"
-                              "Options\n\n"
+//                              "Options\n\n"
                               "Help\n\n"
-                              "Highscore\n\n"
+//                              "Highscore\n\n"
                               "Credits";
 
 const char text_pause_menu[] = "Continue\n\n"
-                               "Options\n\n"
+//                               "Options\n\n"
                                "Help\n\n"
                                "Main Menu";

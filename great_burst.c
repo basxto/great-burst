@@ -567,7 +567,9 @@ void great_burst() {
         draw_stats();
         if (joypad() == J_START) {
             HIDE_SPRITES;
-            menu(1);
+            if (menu(1) == 2 ){
+                playing = 0;
+            }
             SHOW_SPRITES;
             // basically button debouncing
             for (i = 0; i < 5; ++i) {
@@ -580,7 +582,7 @@ void great_burst() {
             }
         }
     }
-    points = 0;
+    //points = 0;
     draw_stats();
     HIDE_SPRITES;
     // clean up sprites

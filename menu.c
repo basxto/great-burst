@@ -123,8 +123,7 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
 void draw_menu(UINT8 mode) {
     if (mode == 0) {
         set_win_tiles(0, 0, 20, 18, great_burst_win_map_clear);
-        write_line(0, 0, 3, "000");
-        write_line(2, 4, 1, "0");
+        draw_stats();
     }
     if (mode == 0) { // main menu
         write_text(7, 4, 12, 14, 0, text_main_menu, sizeof(text_main_menu));
@@ -185,9 +184,16 @@ void slide_out() {
     move_win(7 + (20 << 3) - (3 << 3), 0);
 }
 
-void menu(UINT8 mode) {
+UINT8 menu(UINT8 mode) {
     UINT8 i;
+    UINT8 selected = 0;
+    UINT8 ret = 0;
     great_burst_init();
+    for (i = 0; i < 16; ++i) {
+        buffer[i] = 0x04;
+    }
+    // reset balls
+    set_win_tiles(5, 4, 1, 16, buffer);
     draw_menu(mode);
     SHOW_WIN;
     if (mode == 0) {
@@ -199,16 +205,67 @@ void menu(UINT8 mode) {
     for (i = 0; i < 5; ++i) {
         wait_vbl_done();
     }
-    while (mode == 0 || joypad() != J_START) {
+    while (mode == 0 || ret == 0) {
         // help();
         // credits();
-        if (mode == 0 && joypad() == J_START) {
-            great_burst_init();
-            load_level(0, 0);
-            slide_out();
-            great_burst();
-            draw_menu(mode);
-            slide_in();
+        // if (mode == 0 && joypad() == J_START) {
+        //     great_burst_init();
+        //     load_level(0, 0);
+        //     slide_out();
+        //     great_burst();
+        //     draw_menu(mode);
+        //     slide_in();
+        // }
+        if (mode == 1 && joypad() == J_START) {
+            ret = 1;
+        }
+        switch(joypad()){
+        case J_UP:
+            if(selected > 0){
+                buffer[0] = 0x04;
+                set_win_tiles(5, 4 + (selected << 1), 1, 1, buffer);
+                --selected;
+                buffer[0] = 0x20;
+                set_win_tiles(5, 4 + (selected << 1), 1, 1, buffer);
+            }
+            break;
+        case J_DOWN:
+            if ( (mode == 0 && selected < 3) || (mode == 1 && selected < 2)){
+                buffer[0] = 0x04;
+                set_win_tiles(5, 4 + (selected << 1), 1, 1, buffer);
+                ++selected;
+                buffer[0] = 0x20;
+                set_win_tiles(5, 4 + (selected << 1), 1, 1, buffer);
+            }
+            break;
+        case J_A:
+        case J_B:
+            if( mode == 0 && selected == 0){
+                great_burst_init();
+                load_level(0, 0);
+                slide_out();
+                great_burst();
+                draw_menu(mode);
+                slide_in();
+            } else if( mode == 0 && selected == 1){
+                great_burst_init();
+                load_level(1, sys_time);
+                slide_out();
+                great_burst();
+                draw_menu(mode);
+                slide_in();
+            } else if( mode == 0 && selected == 2){
+                help();
+            } else if( mode == 0 && selected == 3){
+                credits();
+            } else if ( mode == 1 && selected == 0){
+                ret = 1;
+            } else if ( mode == 1 && selected == 1){
+                help();
+            } else if ( mode == 1 && selected == 2){
+                ret = 2;
+            }
+            break;
         }
 
         for (i = 0; i < 8; ++i) {
@@ -216,4 +273,5 @@ void menu(UINT8 mode) {
         }
     };
     slide_out();
+    return ret;
 }
