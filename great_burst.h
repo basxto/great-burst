@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "menu.h"
 #include "sound.h"
 
 // defines for sprite management
@@ -94,6 +95,9 @@ void move_paddle(UINT8 by);
 // sound effect generator
 void plonger(UINT8 note);
 void fade_in(void);
+
+// load prebuilt or random level
+void load_level(UINT8 random, UINT16 level);
 
 // initialize device for game
 void great_burst_init(void);

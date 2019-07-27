@@ -10,7 +10,12 @@ void main() {
     NR50_REG = 0x77; // full volume
     NR51_REG = 0xFF; // all channels
     splash();
-    //menu(0);
-    great_burst();
+    menu(0);
+    // HIDE_BKG;
+    // great_burst_init();
+    // load_level(0, 0);
+    // SHOW_BKG;
+    // fade_in();
+    // great_burst();
 
 }

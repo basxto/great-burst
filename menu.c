@@ -162,25 +162,44 @@ void credits() {
 }
 
 void menu(UINT8 mode) {
+    UINT8 i;
     great_burst_init();
     draw_menu(mode);
-    SHOW_BKG;
     SHOW_WIN;
-    if(mode == 0){
+    if (mode == 0) {
+        SHOW_BKG;
         fade_in();
+    } else {
+        move_win(7 + (20 << 3) - (3 << 3), 0);
+        // slide in
+        for (i = 0; i < (20 << 3) - (3 << 3) - 3; i += 3) {
+            scroll_win(-3, 0);
+            wait_vbl_done();
+        }
+        move_win(7, 0);
+    }
+    for (i = 0; i < 5; ++i) {
+        wait_vbl_done();
     }
     while (joypad() != J_START) {
         // help();
-        credits();
-        wait_vbl_done();
-        wait_vbl_done();
-        wait_vbl_done();
-        wait_vbl_done();
-        wait_vbl_done();
-        wait_vbl_done();
-        wait_vbl_done();
-        wait_vbl_done();
+        // credits();
+        for (i = 0; i < 8; ++i) {
+            wait_vbl_done();
+        }
     };
-    HIDE_BKG;
-    HIDE_WIN;
+    if (mode == 0) {
+        great_burst_init();
+        load_level(0, 0);
+    }
+    move_win(7, 0);
+    // slide in
+    for (i = 0; i < (20 << 3) - (3 << 3) - 3; i += 3) {
+        scroll_win(+3, 0);
+        wait_vbl_done();
+    }
+    move_win(7 + (20 << 3) - (3 << 3), 0);
+    if (mode == 0) {
+        great_burst();
+    }
 }

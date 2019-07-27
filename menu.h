@@ -3,6 +3,8 @@
 
 #include <gb/gb.h>
 
+#include "great_burst.h"
+
 #define font_start 0x2E
 #define font_space 0x04
 #define font_offset 0x10

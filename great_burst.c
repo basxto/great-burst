@@ -303,14 +303,24 @@ void great_burst_init() {
     set_bkg_data(0, 163, great_burst_bg_data);
 }
 
+// load prebuilt or random level
+void load_level(UINT8 random, UINT16 level) {
+    if (random) {
+        random_level(level);
+    } else {
+        memcpy(current_level, great_burst_level[level], 45);
+    }
+    // one_block_level(0x01);
+    // fill level background
+    draw_blocks();
+}
+
 void great_burst() {
     UINT8 changed = 0;
     UINT8 mask;
 
     INT8 tmp_x = 0;
     INT8 tmp_y = 0;
-
-    great_burst_init();
 
     // draw ball
     move_set_sprite(ball_start, great_burst_fg_map[6 * 4], 0, 0);
@@ -360,14 +370,6 @@ void great_burst() {
         scroll_sprite(i, 16, 0);
     }
 
-    // set level
-    memcpy(current_level, great_burst_level[1], 45);
-    // random_level(42);
-    // one_block_level(0x01);
-    // fill level background
-    draw_blocks();
-    SHOW_BKG;
-    fade_in();
     SHOW_SPRITES;
     while (1) {
         changed = 0;
@@ -530,8 +532,19 @@ void great_burst() {
             if (changed & 2)
                 ball.direction = mirror_direction(ball.direction, 1);
         }
-        for (i = 0; i < (25 - (sys_time - time)); ++i) {
-            wait_vbl_done();
+        if (joypad() == J_START) {
+            HIDE_SPRITES;
+            menu(1);
+            SHOW_SPRITES;
+            // basically button debouncing
+            for (i = 0; i < 5; ++i) {
+                wait_vbl_done();
+            }
+        }
+        if ((sys_time - time) < 25) {
+            for (i = 0; i < (25 - (sys_time - time)); ++i) {
+                wait_vbl_done();
+            }
         }
     }
 }
