@@ -1,5 +1,5 @@
 
-const char text_credits_title[] = "==Credits==\n ";
+const char text_credits_title[] = "**Credits**\n ";
 
 const char text_credits[] = "Made by Ba\a^sto\n\n"
                             "Fonts used:\n\n"
@@ -16,9 +16,9 @@ const char text_credits[] = "Made by Ba\a^sto\n\n"
                             "Breakout Set \aC0\n\n"
                             "by Buch & Surt\n\n\n"
                             "For more details\n\n"
-                            "read credits.md";
+                            "read credits\ax";
 
-const char text_help_title[] = "==Help==\n ";
+const char text_help_title[] = "**Help**\n ";
 
 const char text_help[] = "Reflect the\n\n"
                          "ball with the\n\n"

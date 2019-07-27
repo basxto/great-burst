@@ -56,10 +56,18 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
         // those characters are very special
         if (str[i] == '\a') {
             // alternative character mode
-            if ((i + 1) < length && str[i + 1] == '^') {
+            if((i + 1) < length){
                 ++i;
-                tmp_buffer = font_start + (str[i] - font_offset);
-                set_win_tiles(x + j, y + row - 1, 1, 1, &tmp_buffer);
+                // map rows all to first font row
+                tmp_buffer = font_start + ((str[i] & 0x0F) + 0x10 - font_offset);
+                if (str[i] == '"' || str[i] == 'u' || str[i] == '\'' || str[i] == 'I' || str[i] == ';' || str[i] == '\\' || str[i] == '-' || str[i] == '^') {
+                    // write above next character
+                    set_win_tiles(x + j, y + row - 1, 1, 1, &tmp_buffer);
+                } else {
+                    // add character
+                    if (j < 16)
+                        buffer[j++] = tmp_buffer;
+                }
             }
             continue;
         } else if (str[i] == '\n') {
@@ -72,7 +80,7 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
         if (str[i] == '.' && (i + 1) < length && str[i + 1] == '0') {
             // there is a special .0 character
             ++i;
-            tmp_buffer = font_start + ('0' - font_offset);
+            tmp_buffer = font_start + ((('0' & 0x0F) + 0x10) - font_offset);
         } else if (str[i] > 0x20 && str[i] < 0x60) {
             // print regular characters
             tmp_buffer = font_start + (str[i] - font_offset);
