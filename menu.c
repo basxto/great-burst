@@ -144,22 +144,40 @@ void help() {
     set_win_tiles(19, 2, 1, 16, buffer);
     buffer[0] = 0x29;
     set_win_tiles(19, 3, 1, 1, buffer);
-    while (1)
-        ;
+    for (i = 0; i < 40; ++i) {
+        wait_vbl_done();
+    }
 }
 
 void credits() {
     UINT8 i;
     write_text(4, 0, 16, 2, 0, text_credits_title, sizeof(text_credits_title));
+    write_text(4, 2, 15, 16, 0, text_credits, sizeof(text_credits));
+    for (i = 0; i < 16; ++i) {
+        buffer[i] = 0x21;
+    }
+    // set_win_tiles(19, 2, 1, 16, buffer);
+    // buffer[0] = 0x29;
+    // set_win_tiles(19, 3, 1, 1, buffer);
+    for (i = 0; i < 40; ++i) {
+        wait_vbl_done();
+    }
+    write_text(4, 0, 16, 2, 0, text_credits_title, sizeof(text_credits_title));
+    write_text(4, 2, 15, 16, 8, text_credits, sizeof(text_credits));
+    for (i = 0; i < 16; ++i) {
+        buffer[i] = 0x21;
+    }
+    for (i = 0; i < 40; ++i) {
+        wait_vbl_done();
+    }
+    write_text(4, 0, 16, 2, 0, text_credits_title, sizeof(text_credits_title));
     write_text(4, 2, 15, 16, 16, text_credits, sizeof(text_credits));
     for (i = 0; i < 16; ++i) {
         buffer[i] = 0x21;
     }
-    set_win_tiles(19, 2, 1, 16, buffer);
-    buffer[0] = 0x29;
-    set_win_tiles(19, 3, 1, 1, buffer);
-    while (1)
-        ;
+    for (i = 0; i < 40; ++i) {
+        wait_vbl_done();
+    }
 }
 
 void slide_in() {
@@ -256,12 +274,15 @@ UINT8 menu(UINT8 mode) {
                 slide_in();
             } else if( mode == 0 && selected == 2){
                 help();
+                draw_menu(mode);
             } else if( mode == 0 && selected == 3){
                 credits();
+                draw_menu(mode);
             } else if ( mode == 1 && selected == 0){
                 ret = 1;
             } else if ( mode == 1 && selected == 1){
                 help();
+                draw_menu(mode);
             } else if ( mode == 1 && selected == 2){
                 ret = 2;
             }
