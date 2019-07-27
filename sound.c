@@ -1,20 +1,4 @@
-#define note_c 0x00
-#define note_cis 0x01
-#define note_des 0x01
-#define note_d 0x02
-#define note_dis 0x03
-#define note_es 0x03
-#define note_e 0x04
-#define note_f 0x05
-#define note_fis 0x06
-#define note_ges 0x06
-#define note_g 0x07
-#define note_gis 0x08
-#define note_as 0x08
-#define note_a 0x09
-#define note_ais 0x0A
-#define note_b 0x0A
-#define note_h 0x0B
+#include "sound.h"
 
 // value taken from XPMCK
 // probably octaves Great to Five-lined
@@ -32,6 +16,3 @@ const UINT16 notes[][12] = {{0x002C, 0x009C, 0x0106, 0x016A, 0x01C9, 0x0222,
                              0x07D3, 0x07D6, 0x07D8, 0x07DA, 0x07DC, 0x07DE},
                             {0x07E0, 0x07E2, 0x07E4, 0x07E5, 0x07E7, 0x07E8,
                              0x07E9, 0x07EB, 0x07EC, 0x07ED, 0x07EE, 0x07EF}};
-
-// 0x10 & note_b to notes[1][note_b]
-#define note2int(x) (notes[((x)>>4) & 0x0F][(x) & 0x0F])

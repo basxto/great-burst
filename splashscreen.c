@@ -1,5 +1,15 @@
 #include "splashscreen.h"
 
+#include "background.c"
+
+#include "pix/oga_splash_data.c"
+#include "pix/oga_splash_map.c"
+// only O and G
+#include "pix/oga_splash_map_og.c"
+// movable parts of the logo
+#include "pix/oga_splash_movable_data.c"
+#include "pix/oga_splash_movable_map.c"
+
 // make a bling sound with three notes
 void bling() {
     NR10_REG = 0x00; // no sweep

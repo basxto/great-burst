@@ -5,16 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "background.c"
-#include "sound.c"
-
-#include "pix/oga_splash_data.c"
-#include "pix/oga_splash_map.c"
-// only O and G
-#include "pix/oga_splash_map_og.c"
-// movable parts of the logo
-#include "pix/oga_splash_movable_data.c"
-#include "pix/oga_splash_movable_map.c"
+#include "sound.h"
 
 // offset in 8x8 tiles
 #define splashscreen_a_xoffset 4

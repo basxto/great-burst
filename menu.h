@@ -1,9 +1,7 @@
 #ifndef MENU_H
 #define MENU_H
 
-#include "pix/great_burst_win_data.c"
-#include "pix/great_burst_win_map_clear.c"
-#include "text_en.c"
+#include <gb/gb.h>
 
 #define font_start 0x2E
 #define font_space 0x04

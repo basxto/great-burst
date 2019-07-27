@@ -1,4 +1,6 @@
 #include "menu.h"
+#include "pix/great_burst_win_map_clear.c"
+#include "text_en.c"
 
 UINT8 buffer[16];
 
@@ -132,6 +134,7 @@ void draw_menu(UINT8 mode) {
 }
 
 void help() {
+    UINT8 i;
     write_text(4, 0, 15, 2, 0, text_help_title, sizeof(text_help_title));
     write_text(4, 2, 15, 16, 0, text_help, sizeof(text_help));
     for (i = 0; i < 16; ++i) {
@@ -145,6 +148,7 @@ void help() {
 }
 
 void credits() {
+    UINT8 i;
     write_text(4, 0, 16, 2, 0, text_credits_title, sizeof(text_credits_title));
     write_text(4, 2, 15, 16, 16, text_credits, sizeof(text_credits));
     for (i = 0; i < 16; ++i) {
@@ -158,13 +162,13 @@ void credits() {
 }
 
 void menu(UINT8 mode) {
-    set_bkg_data(0, 163, great_burst_bg_data);
+    great_burst_init();
     draw_menu(mode);
     SHOW_BKG;
     SHOW_WIN;
-    /*if(mode == 0){
+    if(mode == 0){
         fade_in();
-    }*/
+    }
     while (joypad() != J_START) {
         // help();
         credits();

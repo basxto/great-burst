@@ -6,14 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "great_burst_level.c"
-
-#include "pix/great_burst_bg_data.c"
-#include "pix/great_burst_bg_map.c"
-#include "pix/great_burst_bg_map_clear.c"
-
-#include "pix/great_burst_fg_data.c"
-#include "pix/great_burst_fg_map.c"
+#include "sound.h"
 
 // defines for sprite management
 #define ball_start 0
@@ -101,6 +94,10 @@ void move_paddle(UINT8 by);
 // sound effect generator
 void plonger(UINT8 note);
 void fade_in(void);
+
+// initialize device for game
+void great_burst_init(void);
+
 // main function of the game
 void great_burst(void);
 

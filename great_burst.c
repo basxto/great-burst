@@ -1,5 +1,16 @@
 #include "great_burst.h"
 
+#include "background.c"
+
+#include "great_burst_level.c"
+
+#include "pix/great_burst_bg_data.c"
+#include "pix/great_burst_bg_map.c"
+#include "pix/great_burst_bg_map_clear.c"
+
+#include "pix/great_burst_fg_data.c"
+#include "pix/great_burst_fg_map.c"
+
 Ball ball = {0, 0, 1, 1, 1};
 Paddle paddle = {0, 1, 6};
 
@@ -281,6 +292,17 @@ void fade_in() {
     delay(100);
 }
 
+void great_burst_init() {
+    // set second color palette
+    // dark grey and white get switched
+    OBP1_REG = 0x26; // 11000110
+
+    // load sprite tileset
+    set_sprite_data(0, 59, great_burst_fg_data);
+    // load background tileset
+    set_bkg_data(0, 163, great_burst_bg_data);
+}
+
 void great_burst() {
     UINT8 changed = 0;
     UINT8 mask;
@@ -288,12 +310,7 @@ void great_burst() {
     INT8 tmp_x = 0;
     INT8 tmp_y = 0;
 
-    // set second color palette
-    // dark grey and white get switched
-    OBP1_REG = 0x26; // 11000110
-
-    // load sprite tileset
-    set_sprite_data(0, 59, great_burst_fg_data);
+    great_burst_init();
 
     // draw ball
     move_set_sprite(ball_start, great_burst_fg_map[6 * 4], 0, 0);
@@ -343,8 +360,6 @@ void great_burst() {
         scroll_sprite(i, 16, 0);
     }
 
-    // load background tileset
-    set_bkg_data(0, 163, great_burst_bg_data);
     // set level
     memcpy(current_level, great_burst_level[1], 45);
     // random_level(42);
