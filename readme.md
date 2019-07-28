@@ -8,8 +8,10 @@ For compilation this game needs:
 * [GameBoyPngConverter](https://github.com/gingemonster/GameBoyPngConverter)
 
 For running this game, you need a Game Boy™ flash card or a Game Boy™ emulator.
+The make file uses retroarch with gambatte core.
 
 Please ajust the makefile variables to your paths.
+For other emulators please change the `emulator` variable.
 
 
 Compile with:
