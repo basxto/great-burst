@@ -130,6 +130,7 @@ UINT8 lock_ball() {
         scroll_sprite(i, ball.x, 0);
     }
     ball.locked = 1;
+    ball.direction = 1;
 }
 
 // only gets called for ball.y < 16 and ball.y can't be < 0
@@ -275,15 +276,15 @@ void plonger(UINT8 note) {
         NR14_REG = 0xC0 | ((notes[1][note_d] >> 8) & 0x07); // msb
         NR13_REG = notes[1][note_d] & 0xFF;
         break;
-    case 5:                                                 // cursor
+    case 5:              // cursor
         NR11_REG = 0x90; // 75% duty
-        NR10_REG = 0x12;                                    // arpeggio | 0
-        //NR12_REG = 0xF1; // volume envelope
+        NR10_REG = 0x12; // arpeggio | 0
+        // NR12_REG = 0xF1; // volume envelope
         NR14_REG = 0xC0 | ((notes[0][note_e] >> 8) & 0x07); // msb
         NR13_REG = notes[0][note_e] & 0xFF;
         break;
-    case 6:  // select
-        NR11_REG = 0x90; // 75% duty
+    case 6:                                                 // select
+        NR11_REG = 0x90;                                    // 75% duty
         NR10_REG = 0x13;                                    // arpeggio | 4
         NR14_REG = 0xC0 | ((notes[0][note_h] >> 8) & 0x07); // msb
         NR13_REG = notes[0][note_h] & 0xFF;
@@ -410,6 +411,7 @@ void great_burst() {
 
     SHOW_SPRITES;
     while (playing) {
+        // 1 mirrors vertically and 2 directional
         changed = 0;
         time = sys_time;
         if (!ball.locked) {
@@ -445,6 +447,16 @@ void great_burst() {
             // 17 double blocks high - ball height
             if (ball.y - tmp_y <= 16 && collision_paddle(ball.x + tmp_x)) {
                 tmp_y = ball.y - 16;
+                // change direction if lef or right is pressed
+                // don't leave the quarter
+                if (joypad() & J_LEFT &&
+                    ((ball.direction + 1) % direction_1st_quarter) != 0) {
+                    ++ball.direction;
+                }
+                if (joypad() & J_RIGHT &&
+                    ((ball.direction - 1) % direction_1st_quarter) != 0) {
+                    --ball.direction;
+                }
                 changed |= 1;
                 plonger(1);
             } else if ((ball.direction > 6 &&
@@ -581,7 +593,7 @@ void great_burst() {
         if (joypad() == J_START) {
             plonger(6);
             HIDE_SPRITES;
-            if (menu(1) == 2 ){
+            if (menu(1) == 2) {
                 playing = 0;
             }
             SHOW_SPRITES;
@@ -596,7 +608,7 @@ void great_burst() {
             }
         }
     }
-    //points = 0;
+    // points = 0;
     draw_stats();
     HIDE_SPRITES;
     // clean up sprites
