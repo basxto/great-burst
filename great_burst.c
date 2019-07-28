@@ -273,7 +273,20 @@ void plonger(UINT8 note) {
     case 4:                                                 // die
         NR10_REG = 0x15;                                    // arpeggio | 5
         NR14_REG = 0xC0 | ((notes[1][note_d] >> 8) & 0x07); // msb
-        NR13_REG = notes[4][note_d] & 0xFF;
+        NR13_REG = notes[1][note_d] & 0xFF;
+        break;
+    case 5:                                                 // cursor
+        NR11_REG = 0x90; // 75% duty
+        NR10_REG = 0x12;                                    // arpeggio | 0
+        //NR12_REG = 0xF1; // volume envelope
+        NR14_REG = 0xC0 | ((notes[0][note_e] >> 8) & 0x07); // msb
+        NR13_REG = notes[0][note_e] & 0xFF;
+        break;
+    case 6:  // select
+        NR11_REG = 0x90; // 75% duty
+        NR10_REG = 0x13;                                    // arpeggio | 4
+        NR14_REG = 0xC0 | ((notes[0][note_h] >> 8) & 0x07); // msb
+        NR13_REG = notes[0][note_h] & 0xFF;
         break;
     case 2:
     default:                                                // wall
@@ -566,6 +579,7 @@ void great_burst() {
         }
         draw_stats();
         if (joypad() == J_START) {
+            plonger(6);
             HIDE_SPRITES;
             if (menu(1) == 2 ){
                 playing = 0;

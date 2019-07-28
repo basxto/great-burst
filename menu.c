@@ -121,10 +121,8 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
 }
 
 void draw_menu(UINT8 mode) {
-    if (mode == 0) {
-        set_win_tiles(0, 0, 20, 18, great_burst_win_map_clear);
-        draw_stats();
-    }
+    set_win_tiles(0, 0, 20, 18, great_burst_win_map_clear);
+    draw_stats();
     if (mode == 0) { // main menu
         write_text(7, 4, 12, 14, 0, text_main_menu, sizeof(text_main_menu));
     } else { // pause menu*/
@@ -235,11 +233,13 @@ UINT8 menu(UINT8 mode) {
         //     slide_in();
         // }
         if (mode == 1 && joypad() == J_START) {
+            plonger(3);
             ret = 1;
         }
         switch(joypad()){
         case J_UP:
             if(selected > 0){
+                plonger(5);
                 buffer[0] = 0x04;
                 set_win_tiles(5, 4 + (selected << 1), 1, 1, buffer);
                 --selected;
@@ -249,6 +249,7 @@ UINT8 menu(UINT8 mode) {
             break;
         case J_DOWN:
             if ( (mode == 0 && selected < 3) || (mode == 1 && selected < 2)){
+                plonger(5);
                 buffer[0] = 0x04;
                 set_win_tiles(5, 4 + (selected << 1), 1, 1, buffer);
                 ++selected;
@@ -258,34 +259,38 @@ UINT8 menu(UINT8 mode) {
             break;
         case J_A:
         case J_B:
+            plonger(6);
             if( mode == 0 && selected == 0){
                 great_burst_init();
                 load_level(0, 0);
                 slide_out();
                 great_burst();
-                draw_menu(mode);
-                slide_in();
             } else if( mode == 0 && selected == 1){
                 great_burst_init();
                 load_level(1, sys_time);
                 slide_out();
                 great_burst();
-                draw_menu(mode);
-                slide_in();
             } else if( mode == 0 && selected == 2){
                 help();
-                draw_menu(mode);
             } else if( mode == 0 && selected == 3){
                 credits();
-                draw_menu(mode);
             } else if ( mode == 1 && selected == 0){
                 ret = 1;
             } else if ( mode == 1 && selected == 1){
                 help();
-                draw_menu(mode);
             } else if ( mode == 1 && selected == 2){
                 ret = 2;
             }
+            draw_menu(mode);
+            // remove ball from draw_menu
+            buffer[0] = 0x04;
+            set_win_tiles(5, 4, 1, 1, buffer);
+            // draw ball on correct position
+            buffer[0] = 0x20;
+            set_win_tiles(5, 4 + (selected << 1), 1, 1, buffer);
+            // after leaving a game, we have to slide back in
+            if(mode == 0 && selected < 2)
+                slide_in();
             break;
         }
 
