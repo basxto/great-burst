@@ -37,10 +37,10 @@ UINT8 buffer[16];
 
 void write_line(UINT8 x, UINT8 y, UINT8 length, char *str) {
     UINT8 i;
-    for (i = 0; i < 16; i++) {
+    for (i = 0; i != 16; i++) {
         buffer[i] = font_space;
     }
-    for (i = 0; i < length; i++) {
+    for (i = 0; i != length; i++) {
         // strings end with a nullbyte
         if (str[i] == '\0') {
             break;
@@ -63,7 +63,7 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
                 char *str, UINT8 length) {
     UINT8 i, tmp_buffer, j = 0, row = 0;
     // skip lines
-    for (i = 0; i < length && offset > 0; ++i)
+    for (i = 0; i != length && offset != 0; ++i)
         if (str[i] == '\n')
             --offset;
     // don't reset character index
@@ -142,10 +142,10 @@ void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,
     }
     if (row < height) {
         // clear buffer
-        for (i = 0; i < 16; ++i) {
+        for (i = 0; i != 16; ++i) {
             buffer[i] = font_space;
         }
-        for (; row < height; row++) {
+        for (; row != height; ++row) {
             set_win_tiles(x, y + row, width, 1, buffer);
         }
     }
@@ -167,13 +167,13 @@ void help() {
     UINT8 i;
     write_text(4, 0, 15, 2, 0, text_help_title, sizeof(text_help_title));
     write_text(4, 2, 15, 16, 0, text_help, sizeof(text_help));
-    for (i = 0; i < 16; ++i) {
+    for (i = 0; i != 16; ++i) {
         buffer[i] = 0x21;
     }
     set_win_tiles(19, 2, 1, 16, buffer);
     buffer[0] = 0x29;
     set_win_tiles(19, 3, 1, 1, buffer);
-    for (i = 0; i < 40; ++i) {
+    for (i = 0; i != 40; ++i) {
         wait_vbl_done();
     }
 }
@@ -182,29 +182,29 @@ void credits() {
     UINT8 i;
     write_text(4, 0, 16, 2, 0, text_credits_title, sizeof(text_credits_title));
     write_text(4, 2, 15, 16, 0, text_credits, sizeof(text_credits));
-    for (i = 0; i < 16; ++i) {
+    for (i = 0; i != 16; ++i) {
         buffer[i] = 0x21;
     }
     // set_win_tiles(19, 2, 1, 16, buffer);
     // buffer[0] = 0x29;
     // set_win_tiles(19, 3, 1, 1, buffer);
-    for (i = 0; i < 40; ++i) {
+    for (i = 0; i != 40; ++i) {
         wait_vbl_done();
     }
     write_text(4, 0, 16, 2, 0, text_credits_title, sizeof(text_credits_title));
     write_text(4, 2, 15, 16, 8, text_credits, sizeof(text_credits));
-    for (i = 0; i < 16; ++i) {
+    for (i = 0; i != 16; ++i) {
         buffer[i] = 0x21;
     }
-    for (i = 0; i < 40; ++i) {
+    for (i = 0; i != 40; ++i) {
         wait_vbl_done();
     }
     write_text(4, 0, 16, 2, 0, text_credits_title, sizeof(text_credits_title));
     write_text(4, 2, 15, 16, 16, text_credits, sizeof(text_credits));
-    for (i = 0; i < 16; ++i) {
+    for (i = 0; i != 16; ++i) {
         buffer[i] = 0x21;
     }
-    for (i = 0; i < 40; ++i) {
+    for (i = 0; i != 40; ++i) {
         wait_vbl_done();
     }
 }
@@ -236,7 +236,7 @@ UINT8 menu(UINT8 mode) {
     UINT8 selected = 0;
     UINT8 ret = 0;
     great_burst_init();
-    for (i = 0; i < 16; ++i) {
+    for (i = 0; i != 16; ++i) {
         buffer[i] = 0x04;
     }
     // reset balls
@@ -258,20 +258,10 @@ UINT8 menu(UINT8 mode) {
     } else {
         slide_in();
     }
-    for (i = 0; i < 5; ++i) {
+    for (i = 0; i != 5; ++i) {
         wait_vbl_done();
     }
     while (mode == 0 || ret == 0) {
-        // help();
-        // credits();
-        // if (mode == 0 && joypad() == J_START) {
-        //     great_burst_init();
-        //     load_level(0, 0);
-        //     slide_out();
-        //     great_burst();
-        //     draw_menu(mode);
-        //     slide_in();
-        // }
         if (mode == 1 && joypad() == J_START) {
             plonger(3);
             ret = 1;
@@ -300,26 +290,39 @@ UINT8 menu(UINT8 mode) {
         case J_A:
         case J_B:
             plonger(6);
-            if (mode == 0 && selected == 0) {
-                great_burst_init();
-                load_level(0, 0);
-                slide_out();
-                great_burst();
-            } else if (mode == 0 && selected == 1) {
-                great_burst_init();
-                load_level(1, sys_time);
-                slide_out();
-                great_burst();
-            } else if (mode == 0 && selected == 2) {
-                help();
-            } else if (mode == 0 && selected == 3) {
-                credits();
-            } else if (mode == 1 && selected == 0) {
-                ret = 1;
-            } else if (mode == 1 && selected == 1) {
-                help();
-            } else if (mode == 1 && selected == 2) {
-                ret = 2;
+            if(mode == 0){
+                switch(selected){
+                case 0:
+                    great_burst_init();
+                    load_level(0, 0);
+                    slide_out();
+                    great_burst();
+                    break;
+                case 1:
+                    great_burst_init();
+                    load_level(1, sys_time);
+                    slide_out();
+                    great_burst();
+                    break;
+                case 2:
+                    help();
+                    break;
+                case 3:
+                    credits();
+                    break;
+                }
+            } else {
+                switch(selected){
+                case 0:
+                    ret = 1;
+                    break;
+                case 1:
+                    help();
+                    break;
+                case 2:
+                    ret = 2;
+                    break;
+                }
             }
             draw_menu(mode);
             // remove ball from draw_menu
@@ -329,12 +332,12 @@ UINT8 menu(UINT8 mode) {
             buffer[0] = 0x20;
             set_win_tiles(5, 4 + (selected << 1), 1, 1, buffer);
             // after leaving a game, we have to slide back in
-            if (mode == 0 && selected < 2)
+            if (mode == 0 && (selected & (~1)) == 0) // <2
                 slide_in();
             break;
         }
 
-        for (i = 0; i < 8; ++i) {
+        for (i = 0; i != 8; ++i) {
             wait_vbl_done();
         }
     };

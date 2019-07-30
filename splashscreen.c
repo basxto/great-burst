@@ -51,7 +51,7 @@ void bling() {
 // 0x00 is a blank tile
 void move_head(UINT8 offset) {
     UINT8 j, i;
-    if (offset > 0) {
+    if (offset != 0) {
         // move sticking out pieces from colums 7 and 8
         background[5 * 20 + 6 + offset] = 0x00;
         background[6 * 20 + 6 + offset] = 0x00;
@@ -63,8 +63,8 @@ void move_head(UINT8 offset) {
         background[7 * 20 + 7 + offset] = background[7 * 20 + 7];
         background[7 * 20 + 7] = 0x00;
         // move remaining columns 2-6
-        for (i = 5; i > 0; --i) {     // change column
-            for (j = 0; j < 6; ++j) { // go through column
+        for (i = 5; i != 0; --i) {     // change column
+            for (j = 0; j != 6; ++j) { // go through column
                 background[(j + 4) * 20 + i + offset] =
                     background[(j + 4) * 20 + i];
                 background[(j + 4) * 20 + i] = 0x00;
@@ -109,34 +109,34 @@ void splash() {
     set_sprite_tile(7, 10);
     move_sprite(7, 0, 5 << 3);
     // move over G and change palette
-    for (i = 0; i < 8; ++i) {
+    for (i = 0; i != 8; ++i) {
         scroll_sprite(i, 12 << 3, 6 << 3);
         set_sprite_prop(i, S_PALETTE | 1);
     }
 
     // load A as sprite; 6x6 pixel
     // 1-2
-    for (i = 2; i <= 3; ++i) {
+    for (i = 2; i != 4; ++i) {
         set_sprite_tile((i + 6),
                         oga_splash_movable_map[splashscreen_a_xoffset + i]);
         move_sprite((i + 6), i << 3, 0);
     }
     // 3-6
-    for (i = 1; i <= 4; ++i) {
+    for (i = 1; i != 5; ++i) {
         set_sprite_tile((i + 9),
                         oga_splash_movable_map[splashscreen_line_width +
                                                splashscreen_a_xoffset + i]);
         move_sprite((i + 9), i << 3, 1 << 3);
     }
     // 7-10
-    for (i = 1; i <= 4; ++i) {
+    for (i = 1; i != 5; ++i) {
         set_sprite_tile((i + 13),
                         oga_splash_movable_map[splashscreen_line_width * 2 +
                                                splashscreen_a_xoffset + i]);
         move_sprite((i + 13), i << 3, 2 << 3);
     }
     // 11-16
-    for (i = 0; i <= 5; ++i) {
+    for (i = 0; i != 6; ++i) {
         set_sprite_tile((i + 18),
                         oga_splash_movable_map[splashscreen_line_width * 3 +
                                                splashscreen_a_xoffset + i]);
@@ -144,7 +144,7 @@ void splash() {
     }
 
     // 17-22
-    for (i = 0; i <= 5; ++i) {
+    for (i = 0; i != 6; ++i) {
         set_sprite_tile((i + 24),
                         oga_splash_movable_map[splashscreen_line_width * 4 +
                                                splashscreen_a_xoffset + i]);
@@ -160,35 +160,35 @@ void splash() {
     move_sprite(31, 5 << 3, 5 << 3);
 
     // move A over G
-    for (i = 8; i < 32; ++i) {
+    for (i = 8; i != 32; ++i) {
         scroll_sprite(i, 9 << 3, 6 << 3);
     }
     SHOW_SPRITES;
 
     // move slowly in 8px steps
-    for (j = 0; j < 6; ++j) {
+    for (j = 0; j != 6; ++j) {
         delay(100);
         // A
-        for (i = 8; i < 32; ++i) {
+        for (i = 8; i != 32; ++i) {
             scroll_sprite(i, 8, 0);
         }
         // O
         memcpy(background, oga_splash_map_og, 360);
         move_head(4 - j);
         set_bkg_tiles(0, 0, 20, 18, background);
-        for (i = 0; i < 8; ++i) {
+        for (i = 0; i != 8; ++i) {
             scroll_sprite(i, -8, 0);
         }
     }
 
     memcpy(background, oga_splash_map, 360);
     // remove text
-    for (i = 2; i < 4; ++i) {
+    for (i = 2; i != 4; ++i) {
         for (j = 0; j < 20; ++j) {
             background[i * 20 + j] = 0x00; // blank them
         }
     }
-    for (i = 11; i < 14; ++i) {
+    for (i = 11; i != 14; ++i) {
         for (j = 0; j < 20; ++j) {
             background[i * 20 + j] = 0x00; // blank them
         }
@@ -196,7 +196,7 @@ void splash() {
     HIDE_SPRITES;
     set_bkg_tiles(0, 0, 20, 18, background);
     // clean up sprites
-    for (i = 0; i < 32; ++i) {
+    for (i = 0; i != 32; ++i) {
         move_sprite(i, 0, 0);
         set_sprite_prop(i, 0x00);
     }
@@ -220,7 +220,7 @@ void splash() {
     delay(100);
     HIDE_SPRITES;
     // clean up again
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i != 4; ++i) {
         move_sprite(i, 0, 0);
         set_sprite_prop(i, 0x00);
     }
@@ -228,7 +228,7 @@ void splash() {
     OBP0_REG = 0xE4; // 11100100
     delay(1000);
     // fadeout
-    for (i = 0; i != 4; i++) {
+    for (i = 0; i != 4; ++i) {
         BGP_REG = (0xFFE4 >> (i << 1));
         set_bkg_palette(0, 1, bg_palette + i);
         delay(100);

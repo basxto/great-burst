@@ -43,14 +43,14 @@ UINT8 random_block(UINT8 ran) {
 
 void random_level(UINT16 seed) {
     initrand(seed);
-    for (i = 0; i < ((field_width * field_height) >> 1); i++) {
-        current_level[i] = random_block(rand() % 100);
-        current_level[i] |= (random_block(rand() % 100)) << 4;
+    for (i = 0; i != ((field_width * field_height) >> 1); i++) {
+        current_level[i] = random_block(rand() % 128);
+        current_level[i] |= (random_block(rand() % 128)) << 4;
     }
 }
 
 void one_block_level(UINT8 block) {
-    for (i = 0; i < ((field_width * field_height) >> 1); i++) {
+    for (i = 0; i != ((field_width * field_height) >> 1); i++) {
         current_level[i] = block & 0x0F;
         current_level[i] |= (block & 0x0F) << 4;
     }
@@ -64,7 +64,7 @@ void draw_blocks() {
     memcpy(background, great_burst_bg_map_clear, 360);
     // place blocks
     // two blocks share one integer
-    for (i = 0; i < (field_width * field_height); ++i) {
+    for (i = 0; i != (field_width * field_height); ++i) {
         // 20 per line 1 offset
         // first block is border
         if (i % 2 == 0) {
@@ -118,7 +118,7 @@ void draw_blocks() {
 
 // that offset of 21 makes no sense
 UINT8 lock_ball() {
-    for (i = ball_start; i < ball_end; ++i) {
+    for (i = ball_start; i != ball_end; ++i) {
         // scroll_sprite(i, (size - paddle.size) << 2, 0);
         scroll_sprite(i, -ball.x, ball.y - 16);
     }
@@ -126,7 +126,7 @@ UINT8 lock_ball() {
     // x is 0 now
     // 8/2 is <<2
     ball.x = paddle.position + ((paddle.size - 2) << 2);
-    for (i = ball_start; i < ball_end; ++i) {
+    for (i = ball_start; i != ball_end; ++i) {
         scroll_sprite(i, ball.x, 0);
     }
     ball.locked = 1;
@@ -205,7 +205,7 @@ void change_paddle_size(UINT8 size) {
         size = 6;
     }
     if (size > paddle.size) { // show more
-        for (i = paddle.size - 6; i < size - 6; ++i) {
+        for (i = paddle.size - 6; i != size - 6; ++i) {
             scroll_sprite(paddle_middle_start + (i << 1), (3 + i) << 3,
                           18 << 3);
             scroll_sprite(paddle_middle_start + (i << 1) + 1, (3 + i) << 3,
@@ -213,26 +213,26 @@ void change_paddle_size(UINT8 size) {
         }
         // center ball
         if (ball.locked) {
-            for (i = ball_start; i < ball_end; ++i) {
+            for (i = ball_start; i != ball_end; ++i) {
                 scroll_sprite(i, (size - paddle.size) << 2, 0);
             }
             ball.x += (size - paddle.size) << 2;
         }
     } else { // show less
-        for (i = size - 6; i < paddle.size - 6; ++i) {
+        for (i = size - 6; i != paddle.size - 6; ++i) {
             move_sprite(paddle_middle_start + (i << 1), 16, 0);
             move_sprite(paddle_middle_start + (i << 1) + 1, 16, 8);
         }
         // center ball
         if (ball.locked) {
-            for (i = ball_start; i < ball_end; ++i) {
+            for (i = ball_start; i != ball_end; ++i) {
                 scroll_sprite(i, ((size - paddle.size) << 2), 0);
             }
             ball.x += (size - paddle.size) << 2;
         }
     }
     // move right end;
-    for (i = paddle_right_start; i < paddle_right_end; ++i) {
+    for (i = paddle_right_start; i != paddle_right_end; ++i) {
         scroll_sprite(i, (size - paddle.size) << 3, 0);
     }
     paddle.size = size;
@@ -240,12 +240,12 @@ void change_paddle_size(UINT8 size) {
 
 void move_paddle(UINT8 by) {
     paddle.position += by;
-    for (i = paddle_left_start; i < paddle_right_end + ((paddle.size - 6) << 1);
+    for (i = paddle_left_start; i != paddle_right_end + ((paddle.size - 6) << 1);
          ++i) {
         scroll_sprite(i, by, 0);
     }
     if (ball.locked) {
-        for (i = ball_start; i < ball_end; ++i) {
+        for (i = ball_start; i != ball_end; ++i) {
             scroll_sprite(i, by, 0);
         }
         ball.x += by;
@@ -372,24 +372,24 @@ void great_burst() {
     move_set_sprite(ball_start + 2, great_burst_fg_map[6 * 5], 0, 8);
     move_set_sprite(ball_start + 3, great_burst_fg_map[6 * 5] + 1, 8, 8);
     // place on 0,0
-    for (i = ball_start; i < ball_end; ++i) {
+    for (i = ball_start; i != ball_end; ++i) {
         scroll_sprite(i, 16, 18 << 3);
     }
     // place 16, 16
-    for (i = ball_start; i < ball_end; ++i) {
+    for (i = ball_start; i != ball_end; ++i) {
         scroll_sprite(i, 16, -16);
     }
     ball.x = ball.y = 16;
 
     // draw paddle
     // left side
-    for (i = 0; i < 6; ++i) {
+    for (i = 0; i != 6; ++i) {
         set_sprite_tile(paddle_left_start + i,
                         great_burst_fg_map[i + (i >= 3 ? 3 : 0)]);
         move_sprite(paddle_left_start + i, (i % 3) << 3, (i >= 3) << 3);
     }
     // right side
-    for (i = 0; i < 6; ++i) {
+    for (i = 0; i != 6; ++i) {
         set_sprite_tile(paddle_right_start + i,
                         great_burst_fg_map[i + (i >= 3 ? 6 : 3)]);
         move_sprite(paddle_right_start + i, ((i % 3) + 3) << 3, (i >= 3) << 3);
@@ -399,11 +399,11 @@ void great_burst() {
     set_sprite_prop(paddle_right_start + 0, S_PALETTE | 1);
 
     // move to left
-    for (i = paddle_left_start; i < paddle_right_end; ++i) {
+    for (i = paddle_left_start; i != paddle_right_end; ++i) {
         scroll_sprite(i, 16, 18 << 3);
     }
     // make green
-    for (i = 0; i < 2; ++i) {
+    for (i = 0; i != 2; ++i) {
         set_sprite_prop(paddle_left_start + i, 2);
         set_sprite_prop(paddle_left_start + i + 3, 2);
         set_sprite_prop(paddle_right_start + i + 1, 2);
@@ -416,7 +416,7 @@ void great_burst() {
         move_set_sprite(i + 1, great_burst_fg_map[6 * 3], 0, 8);
     }
     // move them to x start position
-    for (i = paddle_middle_start; i < paddle_middle_end; ++i) {
+    for (i = paddle_middle_start; i != paddle_middle_end; ++i) {
         scroll_sprite(i, 16, 0);
     }
 
@@ -609,12 +609,13 @@ void great_burst() {
             }
             SHOW_SPRITES;
             // basically button debouncing
-            for (i = 0; i < 5; ++i) {
+            for (i = 5; i != 0; --i) {
                 wait_vbl_done();
             }
         }
-        if ((sys_time - time) < 25) {
-            for (i = 0; i < (25 - (sys_time - time)); ++i) {
+        i = (sys_time - time);
+        if (i & (~31) == 0) { // < 32
+            for (; i != 0; --i) {
                 wait_vbl_done();
             }
         }
@@ -623,7 +624,7 @@ void great_burst() {
     draw_stats();
     HIDE_SPRITES;
     // clean up sprites
-    for (i = 0; i < paddle_middle_end; ++i) {
+    for (i = 0; i != paddle_middle_end; ++i) {
         move_sprite(i, 0, 0);
         set_sprite_prop(i, 0x00);
     }
