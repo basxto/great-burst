@@ -160,7 +160,7 @@ UINT8 collision_block(UINT8 position) {
 
     // is center of ball insized block
     if (x < ball.x && ball.x < (x + block_width) &&
-        (y < (ball.y) && (ball.y) < (y + block_height))) {
+        (y < (ball.y) + 8 && (ball.y) - 8 < (y + block_height))) {
         // plonger(0);
         // hit!!
         return 1;
