@@ -10,6 +10,10 @@
 #define font_offset 0x10
 #define font_to_uppercase (font_offset + 0x20)
 
+// those only wrote on the window layer
+// max length is 3
+void write_num(UINT8 x, UINT8 y, UINT8 length, UINT8 num);
+
 void write_line(UINT8 x, UINT8 y, UINT8 length, char *str);
 
 void write_text(UINT8 x, UINT8 y, UINT8 width, UINT8 height, UINT8 offset,

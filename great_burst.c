@@ -337,14 +337,8 @@ void load_level(UINT8 random, UINT16 level) {
 }
 
 void draw_stats() {
-    char buffer[] = "000";
-    buffer[0] = '0' + (points / 100);
-    buffer[1] = '0' + ((points % 100) / 10);
-    buffer[2] = '0' + (points % 10);
-    write_line(0, 0, 3, buffer);
-    // write_line(2, 4, 1, "0" + balls);
-    buffer[0] = '0' + balls;
-    write_line(2, 4, 1, buffer);
+    write_num(0, 0, 3, points);
+    write_num(2, 4, 1, balls);
 }
 
 void toggle_electro(void){

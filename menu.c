@@ -35,6 +35,24 @@ static const UINT16 fg_palette[] = {
 
 UINT8 buffer[16];
 
+// maximum length is 3 since maximum UINT8 is 255
+void write_num(UINT8 x, UINT8 y, UINT8 length, UINT8 num) {
+    char buffer[] = "000";
+    if (length == 0) {
+        return;
+    }
+    if (length & (~3)) { // >3
+        length = 3;
+    }
+    buffer[2] = '0' + (num % 10);
+    num /= 10;
+    buffer[1] = '0' + (num % 10);
+    num /= 10;
+    buffer[0] = '0' + (num % 10);
+    num /= 10;
+    write_line(x, y, length, buffer + (3 - length));
+}
+
 void write_line(UINT8 x, UINT8 y, UINT8 length, char *str) {
     UINT8 i;
     for (i = 0; i != 16; i++) {
@@ -290,8 +308,8 @@ UINT8 menu(UINT8 mode) {
         case J_A:
         case J_B:
             plonger(6);
-            if(mode == 0){
-                switch(selected){
+            if (mode == 0) {
+                switch (selected) {
                 case 0:
                     great_burst_init();
                     load_level(0, 0);
@@ -312,7 +330,7 @@ UINT8 menu(UINT8 mode) {
                     break;
                 }
             } else {
-                switch(selected){
+                switch (selected) {
                 case 0:
                     ret = 1;
                     break;
