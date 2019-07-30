@@ -11,15 +11,16 @@
 #include "pix/great_burst_fg_data.c"
 #include "pix/great_burst_fg_map.c"
 
-Ball ball = {0, 0, 1, 1, 1};
-Paddle paddle = {0, 1, 6};
+Ball ball;
+Paddle paddle;
 
-UINT8 current_level[((field_width * field_height) >> 1)];
-const UINT8 map_block[] = {0x04, 0x0D, 0x13, 0x17, 0x06, 0x0F, 0x15, 0x19};
-const UINT8 map_shadow[] = {0x24, 0x25, 0x28, 0x11, 0x08, 0x27};
-UINT8 i, balls, blocks = 0;
+static UINT8 current_level[((field_width * field_height) >> 1)];
+static const UINT8 map_block[] = {0x04, 0x0D, 0x13, 0x17, 0x06, 0x0F, 0x15, 0x19};
+static const UINT8 map_shadow[] = {0x24, 0x25, 0x28, 0x11, 0x08, 0x27};
+static UINT8 i;
+UINT8 balls, blocks = 0;
 UINT16 points = 0;
-UINT16 time;
+static UINT16 time;
 
 UINT8 random_block(UINT8 ran) {
     if (ran < 20) {
@@ -113,7 +114,7 @@ void draw_blocks() {
         }
     }
     // update
-    set_bkg_tiles(0, 0, 20, 18, background);
+    set_bkg_tiles(0, 0, 20, 16, background);
 }
 
 // that offset of 21 makes no sense
@@ -320,6 +321,7 @@ void great_burst_init() {
     set_bkg_tiles(1, 16, 16, 2, background);
 
     VBK_REG = 0;
+    set_bkg_tiles(0, 0, 20, 18, great_burst_bg_map_clear);
 }
 
 // load prebuilt or random level
@@ -345,6 +347,52 @@ void draw_stats() {
     write_line(2, 4, 1, buffer);
 }
 
+void toggle_electro(void){
+    // toggle mode bit
+    paddle.mode ^= 0x1;
+    if(paddle.mode & 0x1){
+        // switch set_bkg_tiles to property mode
+        VBK_REG = 1;
+        background[0] = 0;
+        background[1] = 0;
+        set_bkg_tiles(1, 16, 1, 2, background);
+        VBK_REG = 0;
+        // draw new tiles
+        background[0] = electro_tiles;
+        background[1] = electro_tiles + 1;
+        for(i = 2; i != 2+15; ++i){
+            background[i] = electro_tiles+2+(i&0x1);
+        }
+        background[17] = electro_tiles+6;
+        background[18] = electro_tiles+7;
+        for(i = 19; i != 19+15; ++i){
+            background[i] = electro_tiles+8+(i&0x1);
+        }
+        set_bkg_tiles(0, 16, 17, 2, background);
+        // swap grey with orange
+        set_bkg_palette_entry(7, 2, IJ16_ORANGE);
+    } else {
+        // switch set_bkg_tiles to property mode
+        VBK_REG = 1;
+        background[0] = 7;
+        background[1] = 7;
+        set_bkg_tiles(1, 16, 1, 2, background);
+        VBK_REG = 0;
+        // draw new tiles
+        background[0] = rod_tiles;
+        for(i = 1; i != 1+16; ++i){
+            background[i] = rod_tiles+1;
+        }
+        background[17] = rod_tiles+3;
+        for(i = 18; i != 18+16; ++i){
+            background[i] = rod_tiles+4;
+        }
+        set_bkg_tiles(0, 16, 17, 2, background);
+        // swap orange with grey
+        set_bkg_palette_entry(7, 2, IJ16_GREY);
+    }
+}
+
 void great_burst() {
     UINT8 changed = 0;
     UINT8 playing = 1;
@@ -364,6 +412,7 @@ void great_burst() {
     paddle.position = 0;
     paddle.speed = 1;
     paddle.size = 6;
+    paddle.mode = 0;
 
     // draw ball
     move_set_sprite(ball_start, great_burst_fg_map[6 * 4], 0, 0);
@@ -456,30 +505,36 @@ void great_burst() {
                 plonger(2);
             }
             // 17 double blocks high - ball height
-            if (ball.y - tmp_y <= 16 && collision_paddle(ball.x + tmp_x)) {
-                tmp_y = ball.y - 16;
-                // change direction if lef or right is pressed
-                // don't leave the quarter
-                if (joypad() & J_LEFT &&
-                    ((ball.direction + 1) % direction_1st_quarter) != 0) {
-                    ++ball.direction;
-                }
-                if (joypad() & J_RIGHT &&
-                    ((ball.direction - 1) % direction_1st_quarter) != 0) {
-                    --ball.direction;
-                }
-                changed |= 1;
-                plonger(1);
-            } else if ((ball.direction > 6 &&
-                        ball.direction <= direction_3rd_quarter) &&
-                       ball.y < tmp_y) {
-                plonger(4);
-                changed |= 1;
-                lock_ball();
-                --balls;
-                if (balls == -1) {
-                    balls = 0;
-                    playing = 0;
+            if((ball.direction > 6 && ball.direction <= direction_3rd_quarter)){
+                if (ball.y - tmp_y <= 16 && collision_paddle(ball.x + tmp_x)) {
+                    // reflect ball when it hits the paddle
+                    tmp_y = ball.y - 16;
+                    // change direction if left or right is pressed
+                    // don't leave the quarter
+                    if (joypad() & J_LEFT &&
+                        ((ball.direction + 1) % direction_1st_quarter) != 0) {
+                        ++ball.direction;
+                    }
+                    if (joypad() & J_RIGHT &&
+                        ((ball.direction - 1) % direction_1st_quarter) != 0) {
+                        --ball.direction;
+                    }
+                    changed |= 1;
+                    plonger(1);
+                } else if (paddle.mode & 0x1 && ball.y - tmp_y <= 10){
+                    // reflect ball when it hits lightning
+                    tmp_y = ball.y - 10;
+                    changed |= 1;
+                    plonger(1);
+                } else if ( ball.y < tmp_y) {
+                    plonger(4);
+                    changed |= 1;
+                    lock_ball();
+                    --balls;
+                    if (balls == -1) {
+                        balls = 0;
+                        playing = 0;
+                    }
                 }
             } else if (ball.y - tmp_y > ((17 - 2) << 3)) {
                 // mirror ball path partly

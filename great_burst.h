@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "island_joy_16.h"
 #include "menu.h"
 #include "sound.h"
 
@@ -27,6 +28,9 @@
 #define direction_2nd_quarter (direction_max >> 1)
 #define direction_3rd_quarter (direction_1st_quarter + direction_2nd_quarter)
 #define direction_4th_quarter direction_max
+
+#define electro_tiles 0x91
+#define rod_tiles 0x9D
 
 #define block_width 16
 #define block_height 8
@@ -51,6 +55,7 @@ typedef struct {
     UINT8 position;
     UINT8 speed;
     UINT8 size;
+    UINT8 mode; // 0: normal; 1: electro
 } Paddle;
 
 // positive difference between two numbers
@@ -105,6 +110,9 @@ void great_burst_init(void);
 
 // points and left balls
 void draw_stats(void);
+
+// toggle lightning that keeps ball from falling
+void toggle_electro(void);
 
 // main function of the game
 void great_burst(void);
