@@ -361,9 +361,27 @@ void great_burst() {
     paddle.speed = 1;
     paddle.size = 6;
 
+    // colorize background
+    // switch set_bkg_tiles to property mode
+    VBK_REG=1;
+    // this is still in int limit
+    for(i = 0; i != (15 << 4 ); ++i){
+        //set_bkg_tiles(0, 0, 16, 0, background);
+        background[i] = 1;
+    }
+    set_bkg_tiles(1, 1, 16, 15, background);
+    for(i = 0; i != (2 << 4 ); ++i){
+        //set_bkg_tiles(0, 0, 16, 0, background);
+        background[i] = 7;
+    }
+    set_bkg_tiles(1, 16, 16, 2, background);
+
+    VBK_REG=0;
+
+
     // draw ball
     move_set_sprite(ball_start, great_burst_fg_map[6 * 4], 0, 0);
-    set_sprite_prop(ball_start + 0, S_PALETTE);
+    set_sprite_prop(ball_start + 0, S_PALETTE | 1);
     move_set_sprite(ball_start + 1, great_burst_fg_map[6 * 4 + 1], 8, 0);
     move_set_sprite(ball_start + 2, great_burst_fg_map[6 * 5], 0, 8);
     move_set_sprite(ball_start + 3, great_burst_fg_map[6 * 5] + 1, 8, 8);
@@ -391,17 +409,24 @@ void great_burst() {
         move_sprite(paddle_right_start + i, ((i % 3) + 3) << 3, (i >= 3) << 3);
     }
     // use different palette for shiny parts
-    set_sprite_prop(paddle_left_start + 2, S_PALETTE);
-    set_sprite_prop(paddle_right_start + 0, S_PALETTE);
+    set_sprite_prop(paddle_left_start + 2, S_PALETTE | 1);
+    set_sprite_prop(paddle_right_start + 0, S_PALETTE | 1);
 
     // move to left
     for (i = paddle_left_start; i < paddle_right_end; ++i) {
         scroll_sprite(i, 16, 18 << 3);
     }
+    // make green
+    for (i = 0; i < 2; ++i) {
+        set_sprite_prop(paddle_left_start + i, 2);
+        set_sprite_prop(paddle_left_start + i + 3, 2);
+        set_sprite_prop(paddle_right_start + i + 1, 2);
+        set_sprite_prop(paddle_right_start + i + 4, 2);
+    }
     // middle parts, but this will stay hidden for now
     for (i = paddle_middle_start; i < paddle_middle_end; i += 2) {
         set_sprite_tile(i, great_burst_fg_map[6 * 2]);
-        set_sprite_prop(i, S_PALETTE);
+        set_sprite_prop(i, S_PALETTE | 1);
         move_set_sprite(i + 1, great_burst_fg_map[6 * 3], 0, 8);
     }
     // move them to x start position

@@ -101,7 +101,7 @@ void splash() {
     // move over G and change palette
     for (i = 0; i < 8; ++i) {
         scroll_sprite(i, 12 << 3, 6 << 3);
-        set_sprite_prop(i, S_PALETTE);
+        set_sprite_prop(i, S_PALETTE | 1);
     }
 
     // load A as sprite; 6x6 pixel
@@ -194,13 +194,13 @@ void splash() {
     set_bkg_tiles(0, 0, 20, 18, oga_splash_map);
     set_sprite_tile(0, oga_splash_movable_map[splashscreen_line_width + 2]);
     move_sprite(0, 3 << 3, 9 << 3);
-    // set_sprite_prop(0, S_PALETTE);
+    set_sprite_prop(0, S_PALETTE | 1);
     set_sprite_tile(1, oga_splash_movable_map[splashscreen_line_width + 3]);
     move_sprite(1, 4 << 3, 9 << 3);
-    set_sprite_prop(1, S_PALETTE);
+    set_sprite_prop(1, S_PALETTE | 1);
     set_sprite_tile(2, oga_splash_movable_map[splashscreen_line_width + 4]);
     move_sprite(2, 4 << 3, 10 << 3);
-    set_sprite_prop(2, S_PALETTE);
+    set_sprite_prop(2, S_PALETTE | 1);
     // modify main palette
     // dark grey and white get switched
     // also light grey becomes dark grey

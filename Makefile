@@ -4,14 +4,18 @@ pngconvert=./dev/GameBoyPngConverter/linux-x64/GameBoyPngConverter
 
 build: pix/oga_splash_data.c pix/oga_splash_movable_data.c pix/great_burst_bg_data.c pix/great_burst_fg_data.c main.gb
 
+#-Wl-m map output generated as outfile.map
+#-Wl-j NoICE Debug output as outfile.cdb
+# -Wl-yp0x143=0x80 gameboy mode
 main.gb: main.o splashscreen.o menu.o great_burst.o sound.o
-	$(CC) -Wa-l -Wl-m -Wl-j -o $@ $^
+	$(CC) -Wl-m -Wl-j -Wl-yp0x143=0x80 -o $@ $^
 
 run: main.gb
 	$(emulator) ./main.gb
 
+#-Wa-l create list output outfile.lst
 %.o: %.c
-	$(CC) -Wa-l -Wl-m -Wl-j -c -o $@ $^
+	$(CC) -Wa-l -c -o $@ $^
 
 %_data.c: %.png
 	$(pngconvert) $^
