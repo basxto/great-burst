@@ -577,6 +577,10 @@ void great_burst() {
         if (joypad() & J_B) {
             paddle.speed = 4;
         }
+
+        if (joypad() == (J_A | J_B | J_SELECT)) {
+            toggle_electro();
+        }
         // only check directions
         switch (joypad() & 0x0F) {
         case J_RIGHT:
