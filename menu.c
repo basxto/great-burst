@@ -1,6 +1,37 @@
 #include "menu.h"
+#include "island_joy_16.h"
 #include "pix/great_burst_win_map_clear.c"
 #include "text_en.c"
+
+static const UINT16 bg_palette[] = {
+    // blue block
+    IJ16_TURQUOISE, IJ16_BLUE, IJ16_DARK_GREEN, IJ16_BLACK,
+    // green block
+    IJ16_LIGHT_GREEN, IJ16_GREEN, IJ16_DARK_GREEN, IJ16_BLACK,
+    // orange block
+    IJ16_YELLOW, IJ16_ORANGE, IJ16_DARK_PINK, IJ16_BLACK,
+    // pink block
+    IJ16_LIGHT_PINK, IJ16_PINK, IJ16_DARK_PINK, IJ16_BLACK,
+    // ball block
+    IJ16_YELLOW, IJ16_ORANGE, IJ16_GREY, IJ16_BLACK,
+    // tnt
+    IJ16_ORANGE, IJ16_RED, IJ16_RED, IJ16_BLACK,
+    // rod
+    IJ16_YELLOW, IJ16_BLUE, IJ16_GREY, IJ16_BLACK};
+
+static const UINT16 bg_metal_palette[] = {IJ16_YELLOW, IJ16_BEIGE, IJ16_GREY,
+                                          IJ16_BLACK,  IJ16_BLACK, IJ16_BLACK,
+                                          IJ16_BLACK};
+
+static const UINT16 fg_palette[] = {
+    // metal
+    0, IJ16_BEIGE, IJ16_GREY, IJ16_BLACK,
+    // metal reflection
+    0, IJ16_BEIGE, IJ16_GREY, IJ16_YELLOW,
+    // green paddle
+    0, IJ16_LIGHT_GREEN, IJ16_DARK_GREEN, IJ16_BLACK,
+    // fire
+    0, IJ16_ORANGE, IJ16_DARK_PINK, IJ16_BLACK};
 
 UINT8 buffer[16];
 
@@ -213,8 +244,17 @@ UINT8 menu(UINT8 mode) {
     draw_menu(mode);
     SHOW_WIN;
     if (mode == 0) {
+        set_sprite_palette(0, 4, fg_palette);
+        // first one will be defined in fade in
+        set_bkg_palette(1, 7, bg_palette);
         SHOW_BKG;
-        fade_in();
+        DISPLAY_ON;
+        // fade in
+        for (i = 3; i != -1; --i) {
+            BGP_REG = (0xFFE4 >> (i << 1));
+            set_bkg_palette(0, 1, bg_metal_palette + i);
+            delay(100);
+        }
     } else {
         slide_in();
     }
@@ -236,9 +276,9 @@ UINT8 menu(UINT8 mode) {
             plonger(3);
             ret = 1;
         }
-        switch(joypad()){
+        switch (joypad()) {
         case J_UP:
-            if(selected > 0){
+            if (selected > 0) {
                 plonger(5);
                 buffer[0] = 0x04;
                 set_win_tiles(5, 4 + (selected << 1), 1, 1, buffer);
@@ -248,7 +288,7 @@ UINT8 menu(UINT8 mode) {
             }
             break;
         case J_DOWN:
-            if ( (mode == 0 && selected < 3) || (mode == 1 && selected < 2)){
+            if ((mode == 0 && selected < 3) || (mode == 1 && selected < 2)) {
                 plonger(5);
                 buffer[0] = 0x04;
                 set_win_tiles(5, 4 + (selected << 1), 1, 1, buffer);
@@ -260,25 +300,25 @@ UINT8 menu(UINT8 mode) {
         case J_A:
         case J_B:
             plonger(6);
-            if( mode == 0 && selected == 0){
+            if (mode == 0 && selected == 0) {
                 great_burst_init();
                 load_level(0, 0);
                 slide_out();
                 great_burst();
-            } else if( mode == 0 && selected == 1){
+            } else if (mode == 0 && selected == 1) {
                 great_burst_init();
                 load_level(1, sys_time);
                 slide_out();
                 great_burst();
-            } else if( mode == 0 && selected == 2){
+            } else if (mode == 0 && selected == 2) {
                 help();
-            } else if( mode == 0 && selected == 3){
+            } else if (mode == 0 && selected == 3) {
                 credits();
-            } else if ( mode == 1 && selected == 0){
+            } else if (mode == 1 && selected == 0) {
                 ret = 1;
-            } else if ( mode == 1 && selected == 1){
+            } else if (mode == 1 && selected == 1) {
                 help();
-            } else if ( mode == 1 && selected == 2){
+            } else if (mode == 1 && selected == 2) {
                 ret = 2;
             }
             draw_menu(mode);
@@ -289,7 +329,7 @@ UINT8 menu(UINT8 mode) {
             buffer[0] = 0x20;
             set_win_tiles(5, 4 + (selected << 1), 1, 1, buffer);
             // after leaving a game, we have to slide back in
-            if(mode == 0 && selected < 2)
+            if (mode == 0 && selected < 2)
                 slide_in();
             break;
         }

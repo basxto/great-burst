@@ -7,8 +7,15 @@
 // only O and G
 #include "pix/oga_splash_map_og.c"
 // movable parts of the logo
+#include "island_joy_16.h"
 #include "pix/oga_splash_movable_data.c"
 #include "pix/oga_splash_movable_map.c"
+
+static const UINT16 bg_palette[] = {IJ16_WHITE, IJ16_PINK,  IJ16_GREY,
+                                    IJ16_BLACK, IJ16_BLACK, IJ16_BLACK,
+                                    IJ16_BLACK};
+static const UINT16 fg_palette[] = {0, IJ16_PINK, IJ16_GREY,  IJ16_BLACK,
+                                    0, IJ16_PINK, IJ16_WHITE, IJ16_BLACK};
 
 // make a bling sound with three notes
 void bling() {
@@ -68,6 +75,9 @@ void move_head(UINT8 offset) {
 
 void splash() {
     UINT8 i, j, index;
+    // set colors for game boy color
+    set_sprite_palette(0, 3, fg_palette);
+    set_bkg_palette(0, 1, bg_palette);
     // set second color palette
     // dark grey and white get switched
     OBP1_REG = 0xC6; // 11000110
@@ -218,21 +228,10 @@ void splash() {
     OBP0_REG = 0xE4; // 11100100
     delay(1000);
     // fadeout
-    for (i = 0; i < 4; i++) {
-        switch (i) {
-        case 0:
-            BGP_REG = 0xE4;
-            break;
-        case 1:
-            BGP_REG = 0xF9;
-            break;
-        case 2:
-            BGP_REG = 0xFE;
-            break;
-        case 3:
-            BGP_REG = 0xFF;
-            break;
-        }
+    for (i = 0; i != 4; i++) {
+        BGP_REG = (0xFFE4 >> (i << 1));
+        set_bkg_palette(0, 1, bg_palette + i);
         delay(100);
     };
+    DISPLAY_OFF;
 }

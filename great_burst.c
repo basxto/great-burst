@@ -296,17 +296,6 @@ void plonger(UINT8 note) {
     }
 }
 
-void fade_in() {
-    BGP_REG = 0xFF;
-    delay(100);
-    BGP_REG = 0xFE;
-    delay(100);
-    BGP_REG = 0xF9;
-    delay(100);
-    BGP_REG = 0xE4;
-    delay(100);
-}
-
 void great_burst_init() {
     // set second color palette
     // dark grey and white get switched
@@ -316,6 +305,21 @@ void great_burst_init() {
     set_sprite_data(0, 59, great_burst_fg_data);
     // load background tileset
     set_bkg_data(0, 163, great_burst_bg_data);
+
+    // colorize background roughly
+    // switch set_bkg_tiles to property mode
+    VBK_REG = 1;
+    // this is still in int limit
+    for (i = 0; i != (15 << 4); ++i) {
+        background[i] = 1;
+    }
+    set_bkg_tiles(1, 1, 16, 15, background);
+    for (i = 0; i != (2 << 4); ++i) {
+        background[i] = 7;
+    }
+    set_bkg_tiles(1, 16, 16, 2, background);
+
+    VBK_REG = 0;
 }
 
 // load prebuilt or random level
@@ -360,24 +364,6 @@ void great_burst() {
     paddle.position = 0;
     paddle.speed = 1;
     paddle.size = 6;
-
-    // colorize background
-    // switch set_bkg_tiles to property mode
-    VBK_REG=1;
-    // this is still in int limit
-    for(i = 0; i != (15 << 4 ); ++i){
-        //set_bkg_tiles(0, 0, 16, 0, background);
-        background[i] = 1;
-    }
-    set_bkg_tiles(1, 1, 16, 15, background);
-    for(i = 0; i != (2 << 4 ); ++i){
-        //set_bkg_tiles(0, 0, 16, 0, background);
-        background[i] = 7;
-    }
-    set_bkg_tiles(1, 16, 16, 2, background);
-
-    VBK_REG=0;
-
 
     // draw ball
     move_set_sprite(ball_start, great_burst_fg_map[6 * 4], 0, 0);

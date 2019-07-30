@@ -4,6 +4,7 @@
 #define ISLAND_JOY_16_H
 
 #include <gb/gb.h>
+#include <gb/cgb.h>
 // /256*32
 // #ffffff
 #define IJ16_WHITE (RGB(31, 31, 31))

@@ -2,6 +2,8 @@
 #define GREAT_BURST_H
 
 #include <gb/gb.h>
+// gameboy color
+#include <gb/cgb.h>
 #include <rand.h>
 #include <stdio.h>
 #include <string.h>
@@ -94,7 +96,6 @@ void move_paddle(UINT8 by);
 
 // sound effect generator
 void plonger(UINT8 note);
-void fade_in(void);
 
 // load prebuilt or random level
 void load_level(UINT8 random, UINT16 level);
